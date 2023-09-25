@@ -1,0 +1,62 @@
+# SPDX-License-Identifier: MIT
+
+[default]
+callback_url = "http://garm-server.garm-server.svc:9997/api/v1/callbacks/status"
+metadata_url = "http://garm-server.garm-server.svc:9997/api/v1/metadata"
+# This folder is defined here for future use. Right now, we create a SSH
+# public/private key-pair.
+config_dir = "/home/mb/bin/garm"
+# Uncomment this line if you'd like to log to a file instead of standard output.
+# log_file = "/tmp/runner-manager.log"
+
+enable_log_streamer = true
+
+[jwt_auth]
+# A JWT token secret used to sign tokens.
+# Obviously, this needs to be changed :).
+secret = "ZvmfsIk65DuQR7MYKpep2QxvTaS7bzSn"
+
+# Time to live for tokens. Both the instances and you will use JWT tokens to
+# authenticate against the API. However, this TTL is applied only to tokens you
+# get when logging into the API. The tokens issued to the instances we manage,
+# have a hardcoded TTL of 15 minutes. The minimum TTL for this token is 24h.
+time_to_live = "8760h"
+
+[metrics]
+  disable_auth = true
+  enable = true
+
+[apiserver]
+  bind = "0.0.0.0"
+  port = 9997
+  use_tls = false
+  cors_origins = ["*"]
+  [apiserver.tls]
+    # Path on disk to a x509 certificate.
+    certificate = ""
+    # The path on disk to the corresponding private key for the certificate.
+    key = ""
+    # CA certificate bundle to use.
+    ca_certificate = ""
+
+[database]
+  debug = false
+  backend = "sqlite3"
+  passphrase = "WxEMd8XljJZFWxNqGECemR6EQZnR0UYw"
+  [database.sqlite3]
+    db_file = "/home/mb/bin/garm/garm.db"
+
+[[provider]]
+name = "kubernetes_external"
+description = "kubernetes provider"
+provider_type = "external"
+  [provider.external]
+  config_file = "/home/mb/bin/garm/garm-provider-k8s-config.yaml"
+  provider_executable = "/home/mb/bin/garm/garm-provider-k8s"
+
+[[github]]
+  name = "GitHub-Actions"
+  oauth2_token = ""
+  base_url = "https://git.i.mercedes-benz.com"
+  api_base_url = "https://git.i.mercedes-benz.com"
+  upload_base_url = "https://git.i.mercedes-benz.com"
