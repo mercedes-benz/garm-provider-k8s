@@ -1,0 +1,53 @@
+# SPDX-License-Identifier: MIT
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    garm: server
+  name: garm-server
+  namespace: garm-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      garm: server
+  template:
+    metadata:
+      labels:
+        garm: server
+    spec:
+      containers:
+        - image: localhost:5000/garm-with-k8s:latest
+          name: garm-server
+          imagePullPolicy: Always
+          env:
+            - name: ARCH
+              value: <ARCH>
+          volumeMounts:
+            - name: data
+              mountPath: /opt/garm/data
+            - name: cli-config
+              mountPath: /.local/share/garm-cli
+            - name: garm-config
+              mountPath: /opt/garm/config
+              readOnly: true
+            - name: garm-kubernetes-provider-config
+              mountPath: /opt/garm/provider-config
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 65534
+      serviceAccountName: garm-server
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: garm-data
+        - name: cli-config
+          persistentVolumeClaim:
+            claimName: garm-home
+        - name: garm-config
+          configMap:
+            name: garm-configuration
+        - name: garm-kubernetes-provider-config
+          configMap:
+            name: garm-kubernetes-provider-config

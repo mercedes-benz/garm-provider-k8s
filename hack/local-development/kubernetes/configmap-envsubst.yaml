@@ -1,0 +1,67 @@
+# SPDX-License-Identifier: MIT
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: garm-configuration
+  namespace: garm-server
+data:
+  config.toml: |
+    [default]
+    callback_url = "http://garm-server.garm-server.svc:9997/api/v1/callbacks/status"
+    metadata_url = "http://garm-server.garm-server.svc:9997/api/v1/metadata"
+    config_dir = "/home/mb/bin/garm"
+    enable_log_streamer = true
+
+    [jwt_auth]
+    secret = "ZvmfsIk65DuQR7MYKpep2QxvTaS7bzSn"
+    time_to_live = "8760h"
+
+    [metrics]
+    disable_auth = true
+    enable = true
+
+    [apiserver]
+    bind = "0.0.0.0"
+    port = 9997
+    use_tls = false
+    cors_origins = ["*"]
+
+    [database]
+    debug = false
+    backend = "sqlite3"
+    passphrase = "WxEMd8XljJZFWxNqGECemR6EQZnR0UYw"
+    [database.sqlite3]
+    db_file = "/opt/garm/data/garm.db"
+
+    [[provider]]
+    name = "kubernetes_external"
+    description = "kubernetes provider"
+    provider_type = "external"
+    [provider.external]
+    config_file = "/opt/garm/provider-config/garm-provider-k8s-config.yaml"
+    provider_executable = "/opt/garm/bin/garm-provider-k8s"
+    environment_variables = ["KUBERNETES_"]
+
+    [[github]]
+    name = "$GARM_GITHUB_NAME"
+    oauth2_token = "$GARM_GITHUB_OAUTH_TOKEN"
+    base_url = "$GARM_GITHUB_BASE_URL"
+    api_base_url = "$GARM_GITHUB_API_BASE_URL"
+    upload_base_url = "$GARM_GITHUB_UPLOAD_BASE_URL"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: garm-kubernetes-provider-config
+  namespace: garm-server
+data:
+  garm-provider-k8s-config.yaml: |
+    kubeConfigPath: ""
+    runnerNamespace: "runner"
+    containerRegistry: "localhost:5000"
+    podTemplate:
+      spec:
+        volumes:
+          - name: my-additional-volume
+            emptyDir: {}

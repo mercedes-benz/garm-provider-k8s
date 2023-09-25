@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: MIT
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    garm: server
+  name: garm-server
+  namespace: garm-server
+spec:
+  ports:
+    - name: http
+      port: 9997
+      protocol: TCP
+      targetPort: 9997
+  selector:
+    garm: server

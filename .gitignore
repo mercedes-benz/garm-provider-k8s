@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: MIT
+
+.idea
+/bin/
+/hack/bin/garm-provider-k8s
+/hack/local-development/kubernetes/configmap.yaml
+/hack/local-development/kubernetes/garm-operator-all.yaml
+
+# Ignore all files in the tmp directory
+# primarly used during the release process
+tmp/*
