@@ -4,27 +4,27 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"log"
-	"path/filepath"
 
 	"github.com/spf13/viper"
+	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/yaml"
 )
 
 type Config struct {
-	KubeConfigPath    string `mapstructure:"KubeConfigPath"`
-	ContainerRegistry string `mapstructure:"ContainerRegistry"`
-	RunnerNamespace   string `mapstructure:"RunnerNamespace"`
+	KubeConfigPath    string                 `mapstructure:"KubeConfigPath"`
+	ContainerRegistry string                 `mapstructure:"ContainerRegistry"`
+	RunnerNamespace   string                 `mapstructure:"RunnerNamespace"`
+	PodTemplate       corev1.PodTemplateSpec `mapstructure:"PodTemplate"`
 }
 
 func NewConfig(configPath string) (*Config, error) {
 	if configPath == "" {
 		return nil, errors.New("no config file path provided")
 	}
-	dir, file := filepath.Split(configPath)
-	filenameWithoutExt := file[0 : len(file)-len(filepath.Ext(file))]
 
-	viper.SetConfigName(filenameWithoutExt)
-	viper.AddConfigPath(dir)
+	viper.SetConfigFile(configPath)
 
 	if err := viper.ReadInConfig(); err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
@@ -33,10 +33,22 @@ func NewConfig(configPath string) (*Config, error) {
 		}
 	}
 
-	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
-		return nil, err
+	config := Config{}
+	config.KubeConfigPath = viper.GetString("KubeConfigPath")
+	config.ContainerRegistry = viper.GetString("ContainerRegistry")
+	config.RunnerNamespace = viper.GetString("RunnerNamespace")
+
+	podTemplateBytes, err := yaml.Marshal(viper.Get("PodTemplate"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal PodTemplate into bytes: %v", err)
 	}
+
+	var podTemplateSpec corev1.PodTemplateSpec
+	if err := yaml.Unmarshal(podTemplateBytes, &podTemplateSpec); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal PodTemplate bytes into corev1.PodTemplateSpec: %v", err)
+	}
+
+	config.PodTemplate = podTemplateSpec
 
 	if config.ContainerRegistry == "" {
 		return nil, errors.New("property `ContainerRegistry` in provider config must be set")

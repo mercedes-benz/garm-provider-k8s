@@ -4,20 +4,19 @@ package spec
 
 import (
 	"fmt"
-	"github.com/cloudbase/garm-provider-common/params"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
-	"k8s.io/apimachinery/pkg/util/json"
 	"net/url"
 	"path/filepath"
 	"strings"
 	"unicode"
+
+	"github.com/cloudbase/garm-provider-common/params"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/json"
 )
 
 const (
-	GarmRunnerNameLabel   = "garm/runner-name"
 	GarmControllerIDLabel = "garm/controllerID"
-	GarmImageLabel        = "garm/image"
 	GarmFlavourLabel      = "garm/flavour"
 	GarmOSTypeLabel       = "garm/os_type"
 	GarmOSArchLabel       = "garm/os_arch"
@@ -42,10 +41,12 @@ const (
 	Large  Flavour = "large"
 )
 
-type OSType string
-type OSName string
-type OSArch string
-type OSVersion string
+type (
+	OSType    string
+	OSName    string
+	OSArch    string
+	OSVersion string
+)
 
 type ExtraSpecs struct {
 	OSName    OSName
@@ -68,11 +69,6 @@ var statusMap = map[string]string{
 }
 
 func PodToInstance(pod *corev1.Pod, overwriteInstanceStatus params.InstanceStatus) (*params.ProviderInstance, error) {
-	instanceName, ok := pod.ObjectMeta.Labels[GarmRunnerNameLabel]
-	if !ok {
-		return &params.ProviderInstance{}, fmt.Errorf("Error converting pod to params.Instance: pod  %s has no label: %s", pod.Name, GarmRunnerNameLabel)
-	}
-
 	// for garm to work properly, during creation of instance status needs to be set manually to "running", other than the status is derived from pod.Status.Phase
 	if overwriteInstanceStatus == "" {
 		overwriteInstanceStatus = params.InstanceStatus(statusMap[string(pod.Status.Phase)])
@@ -82,7 +78,7 @@ func PodToInstance(pod *corev1.Pod, overwriteInstanceStatus params.InstanceStatu
 
 	return &params.ProviderInstance{
 		ProviderID: pod.Name,
-		Name:       instanceName,
+		Name:       pod.Name,
 		Status:     overwriteInstanceStatus,
 		OSArch:     params.OSArch(imageDetails.OSArch),
 		OSType:     params.OSType(imageDetails.OSType),
@@ -101,10 +97,8 @@ func ParamsToPodLabels(controllerID string, bootstrapParams params.BootstrapInst
 		labels[GarmOSVersionLabel] = string(extraSpecs.OSVersion)
 	}
 
-	labels[GarmRunnerNameLabel] = ToValidLabel(bootstrapParams.Name)
 	labels[GarmControllerIDLabel] = ToValidLabel(controllerID)
 	labels[GarmPoolIDLabel] = ToValidLabel(bootstrapParams.PoolID)
-	labels[GarmImageLabel] = ToValidLabel(bootstrapParams.Image)
 	labels[GarmFlavourLabel] = ToValidLabel(bootstrapParams.Flavor)
 	labels[GarmOSTypeLabel] = ToValidLabel(string(bootstrapParams.OSType))
 	labels[GarmOSArchLabel] = ToValidLabel(string(bootstrapParams.OSArch))

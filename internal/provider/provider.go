@@ -4,17 +4,20 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"github.com/cloudbase/garm-provider-common/params"
+	"reflect"
 	"strings"
 
+	"github.com/cloudbase/garm-provider-common/params"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/mercedes-benz/garm-provider-k8s/client"
 	"github.com/mercedes-benz/garm-provider-k8s/config"
 	"github.com/mercedes-benz/garm-provider-k8s/internal/spec"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/mercedes-benz/garm-provider-k8s/pkg/diff"
 )
 
 type Provider struct {
@@ -23,7 +26,7 @@ type Provider struct {
 	KubeClient   client.IKubeClientWrapper
 }
 
-func (p Provider) CreateInstance(ctx context.Context, bootstrapParams params.BootstrapInstance) (params.ProviderInstance, error) {
+func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.BootstrapInstance) (params.ProviderInstance, error) {
 	podName := strings.ToLower(bootstrapParams.Name)
 	labels := spec.ParamsToPodLabels(p.ControllerID, bootstrapParams)
 	fullImageName := spec.GetFullImagePath(p.Config.ContainerRegistry, bootstrapParams.Image)
@@ -64,7 +67,12 @@ func (p Provider) CreateInstance(ctx context.Context, bootstrapParams params.Boo
 		return params.ProviderInstance{}, err
 	}
 
-	createdPod, err := p.KubeClient.CreatePod(pod, p.Config.RunnerNamespace)
+	mergedPod, err := mergePodSpecs(pod, p.Config.PodTemplate)
+	if err != nil {
+		return params.ProviderInstance{}, err
+	}
+
+	createdPod, err := p.KubeClient.CreatePod(mergedPod, p.Config.RunnerNamespace)
 	if err != nil {
 		return params.ProviderInstance{}, fmt.Errorf("error calling CreateInstance: can not create pod %v in namespace %v: %w", pod.Name, p.Config.RunnerNamespace, err)
 	}
@@ -77,13 +85,28 @@ func (p Provider) CreateInstance(ctx context.Context, bootstrapParams params.Boo
 	return *result, nil
 }
 
-func (p Provider) DeleteInstance(_ context.Context, instance string) error {
-	podToDelete, err := p.KubeClient.GetPod(instance, "")
-	if err != nil {
-		return fmt.Errorf("error calling DeleteInstance: can not delete instance %s: %w", instance, err)
+func mergePodSpecs(pod *corev1.Pod, template corev1.PodTemplateSpec) (*corev1.Pod, error) {
+	if reflect.ValueOf(template).IsZero() {
+		return pod, nil
 	}
 
-	err = p.KubeClient.DeletePod(podToDelete.Name, podToDelete.Namespace)
+	patch, _, err := diff.CreateTwoWayMergePatch(pod.Spec, template, corev1.PodTemplateSpec{})
+	if err != nil {
+		return nil, err
+	}
+
+	mergeBytes, err := diff.StrategicMergePatch(pod, patch, corev1.Pod{})
+	if err != nil {
+		return nil, err
+	}
+
+	mergedPod := &corev1.Pod{}
+	json.Unmarshal(mergeBytes, mergedPod)
+	return mergedPod, nil
+}
+
+func (p Provider) DeleteInstance(_ context.Context, instance string) error {
+	err := p.KubeClient.DeletePod(instance, p.Config.RunnerNamespace)
 	if err != nil {
 		return fmt.Errorf("error calling DeleteInstance: can not delete instance %s: %w", instance, err)
 	}
@@ -91,23 +114,12 @@ func (p Provider) DeleteInstance(_ context.Context, instance string) error {
 }
 
 func (p Provider) GetInstance(_ context.Context, instance string) (params.ProviderInstance, error) {
-	labels := make(map[string]string)
-	labels[spec.GarmRunnerNameLabel] = spec.ToValidLabel(instance)
-
-	pods, err := p.KubeClient.ListPodsByLabels(labels, "")
+	pod, err := p.KubeClient.GetPod(instance, p.Config.RunnerNamespace)
 	if err != nil {
 		return params.ProviderInstance{}, fmt.Errorf("error calling GetInstance: can not get instance %s: %s", instance, err)
 	}
 
-	if len(pods.Items) == 0 {
-		return params.ProviderInstance{}, fmt.Errorf("error calling GetInstance: no matching pod found for instance %s", instance)
-	}
-
-	if len(pods.Items) > 1 {
-		return params.ProviderInstance{}, fmt.Errorf("error calling GetInstance: more than one matching pod found for instance %s", instance)
-	}
-
-	result, err := spec.PodToInstance(&pods.Items[0], "")
+	result, err := spec.PodToInstance(pod, "")
 	if err != nil {
 		return params.ProviderInstance{}, err
 	}
@@ -142,6 +154,10 @@ func (p Provider) RemoveAllInstances(ctx context.Context) error {
 	labels[spec.GarmControllerIDLabel] = p.ControllerID
 
 	pods, err := p.KubeClient.ListPodsByLabels(labels, "")
+	if err != nil {
+		return err
+	}
+
 	for _, pod := range pods.Items {
 		err = p.KubeClient.DeletePod(pod.Name, pod.Namespace)
 		if err != nil {
@@ -152,11 +168,11 @@ func (p Provider) RemoveAllInstances(ctx context.Context) error {
 }
 
 func (p Provider) Stop(_ context.Context, instance string, force bool) error {
-	panic("implement me")
+	panic(fmt.Sprintf("Stop() not implemented, called with instance: %s, force: %t", instance, force))
 }
 
 func (p Provider) Start(_ context.Context, instance string) error {
-	panic("implement me")
+	panic(fmt.Sprintf("Start() not implemented, called with instance: %s", instance))
 }
 
 func NewKubernetesProvider(
