@@ -3,7 +3,7 @@
 FROM golang:1.20.4 AS build
 
 ARG garm_repo=https://github.com/cloudbase/garm
-ARG garm_repo_ref=fdfcc619adbb6f79814471294ff145bb609a3714
+ARG garm_repo_ref=v0.1.3
 
 # build garm binary
 RUN git clone $garm_repo garm_repo && \
