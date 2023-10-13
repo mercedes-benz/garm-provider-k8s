@@ -4,43 +4,48 @@ package config
 
 import (
 	"errors"
-	"log"
-	"path/filepath"
-
-	"github.com/spf13/viper"
+	"fmt"
+	koanfYaml "github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
+	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/yaml"
 )
 
 type Config struct {
-	KubeConfigPath    string `mapstructure:"KubeConfigPath"`
-	ContainerRegistry string `mapstructure:"ContainerRegistry"`
-	RunnerNamespace   string `mapstructure:"RunnerNamespace"`
+	KubeConfigPath    string                 `koanf:"kubeConfigPath"`
+	ContainerRegistry string                 `koanf:"containerRegistry"`
+	RunnerNamespace   string                 `koanf:"runnerNamespace"`
+	PodTemplate       corev1.PodTemplateSpec `koanf:"podTemplate"`
 }
 
 func NewConfig(configPath string) (*Config, error) {
+	k := koanf.New(".")
+
 	if configPath == "" {
 		return nil, errors.New("no config file path provided")
 	}
-	dir, file := filepath.Split(configPath)
-	filenameWithoutExt := file[0 : len(file)-len(filepath.Ext(file))]
 
-	viper.SetConfigName(filenameWithoutExt)
-	viper.AddConfigPath(dir)
-
-	if err := viper.ReadInConfig(); err != nil {
-		var configFileNotFoundError viper.ConfigFileNotFoundError
-		if errors.As(err, &configFileNotFoundError) {
-			log.Println("No configuration file found, using default values")
-		}
-	}
-
-	var config Config
-	if err := viper.Unmarshal(&config); err != nil {
+	if err := k.Load(file.Provider(configPath), koanfYaml.Parser()); err != nil {
 		return nil, err
 	}
 
-	if config.ContainerRegistry == "" {
-		return nil, errors.New("property `ContainerRegistry` in provider config must be set")
+	config := Config{}
+	config.KubeConfigPath = k.String("KubeConfigPath")
+	config.ContainerRegistry = k.String("ContainerRegistry")
+	config.RunnerNamespace = k.String("RunnerNamespace")
+
+	podTemplateBytes, err := yaml.Marshal(k.Get("podTemplate"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal PodTemplate into bytes: %v", err)
 	}
+
+	var podTemplateSpec corev1.PodTemplateSpec
+	if err := yaml.Unmarshal(podTemplateBytes, &podTemplateSpec); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal PodTemplate bytes into corev1.PodTemplateSpec: %v", err)
+	}
+
+	config.PodTemplate = podTemplateSpec
 
 	if config.RunnerNamespace == "" {
 		config.RunnerNamespace = "runner"

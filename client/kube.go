@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/mercedes-benz/garm-provider-k8s/config"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -16,6 +15,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	certutil "k8s.io/client-go/util/cert"
 	"k8s.io/klog/v2"
+
+	"github.com/mercedes-benz/garm-provider-k8s/config"
 )
 
 type IKubeClientWrapper interface {
@@ -214,6 +215,7 @@ func inClusterConfig() (*kubernetes.Clientset, error) {
 
 func initRestClient() (*rest.Config, error) {
 	const (
+		/* #nosec */
 		tokenFile  = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 		rootCAFile = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 	)

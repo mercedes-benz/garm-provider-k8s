@@ -56,7 +56,7 @@ provider_type = "external"
 
 [[github]]
   name = "GitHub-Actions"
-  oauth2_token = ""
+  oauth2_token = "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"
   base_url = "https://git.i.mercedes-benz.com"
   api_base_url = "https://git.i.mercedes-benz.com"
   upload_base_url = "https://git.i.mercedes-benz.com"
