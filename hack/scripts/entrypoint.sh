@@ -30,7 +30,7 @@ if [ -z "$ARCH" ]; then
 fi
 
 gcli pool add \
-  --image="runner:linux-ubuntu-22.04-${ARCH}"  \
+  --image="roadrunner-default-container:latest"  \
   --provider-name=kubernetes_external \
   --tags=kubernetes,ubuntu \
   --os-type=linux \

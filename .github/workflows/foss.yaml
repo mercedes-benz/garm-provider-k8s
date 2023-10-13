@@ -26,7 +26,7 @@ jobs:
       - name: Synopsys Detect
         run: |
           GITHUB_REF="$(echo $GITHUB_REF_NAME | tr ':/' '_')"
-          BLACKDUCK_SCAN_VERSION_NAME="${GITHUB_REF}_${GITHUB_SHA}"
+          BLACKDUCK_SCAN_VERSION_NAME="${GITHUB_REF}"
           export BLACKDUCK_SCAN_VERSION_NAME
           
           # create the tmp directory as we also do during the release process
