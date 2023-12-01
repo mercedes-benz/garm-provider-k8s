@@ -1,5 +1,16 @@
 # SPDX-License-Identifier: MIT
 
+# Setting SHELL to bash allows bash commands to be executed by recipes.
+# Options are set to exit when a recipe line exits non-zero or a piped command fails.
+SHELL = /usr/bin/env bash -o pipefail
+.SHELLFLAGS = -ec
+
+GARM_GITHUB_NAME ?= ""
+GARM_GITHUB_OAUTH_TOKEN ?= ""
+GARM_GITHUB_BASE_URL ?= https://github.com
+GARM_GITHUB_API_BASE_URL ?= https://api.github.com
+GARM_GITHUB_UPLOAD_BASE_URL ?= https://uploads.github.com
+
 # Set binary output folder
 BIN_DIR := ./bin
 
@@ -73,7 +84,17 @@ docker-build-runner:
 
 .PHONY: template
 template:
-	@kustomize build k8s_deployment | sed 's/<ARCH>/$(ARCH)/' | sed 's@<RUNNER_IMAGE>@$(RUNNER_IMAGE)@'
+ifeq ($(GARM_GITHUB_NAME),)
+	$(error GARM_GITHUB_NAME is undefined)
+endif
+ifeq ($(GARM_GITHUB_OAUTH_TOKEN),)
+	$(error GARM_GITHUB_OAUTH_TOKEN is undefined)
+endif
+	GARM_GITHUB_BASE_URL=$(GARM_GITHUB_BASE_URL) \
+	GARM_GITHUB_API_BASE_URL=$(GARM_GITHUB_API_BASE_URL) \
+	GARM_GITHUB_UPLOAD_BASE_URL=$(GARM_GITHUB_UPLOAD_BASE_URL) \
+	envsubst < hack/local-development/kubernetes/configmap-envsubst.yaml > hack/local-development/kubernetes/configmap.yaml
+	
 
 .PHONY: apply
 apply:

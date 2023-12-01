@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: MIT
 
-FROM golang:1.20.4 AS build
+FROM golang:1.21 AS build
 
 ARG garm_repo=https://github.com/cloudbase/garm
-ARG garm_repo_ref=v0.1.3
+ARG garm_repo_ref=main
 
 # build garm binary
+# primarly used to get the binary build for
+# the local CPU architecture
 RUN git clone $garm_repo garm_repo && \
   cd garm_repo && \
   git checkout $garm_repo_ref && \
@@ -15,29 +17,23 @@ RUN git clone $garm_repo garm_repo && \
 
 FROM alpine:3.18
 
-RUN addgroup -S mb && \
-  adduser -u 1001 -S mb -G mb
+WORKDIR /opt/garm/
 
-WORKDIR /home/mb/bin/garm
+ENV PATH="${PATH}:/opt/garm/bin"
 
-COPY --from=build --chown=1001:mb /go/bin/garm ./garm
-COPY --from=build --chown=1001:mb /go/bin/garm-cli ./garm-cli
+COPY --from=build /go/bin/garm ./bin/garm
+COPY --from=build /go/bin/garm-cli ./bin/garm-cli
 
-COPY --chown=1001:mb ./config/config.toml .
-COPY --chown=1001:mb ./config/garm-provider-k8s-config.yaml .
-COPY --chown=1001:mb ./scripts/entrypoint.sh .
-COPY --chown=1001:mb ./bin/garm-provider-k8s .
+COPY ./scripts/entrypoint.sh ./bin/entrypoint.sh
+COPY ./bin/garm-provider-k8s ./bin/garm-provider-k8s
 
-RUN chmod +x ./entrypoint.sh && \
-    chmod +x ./garm && \
-    chmod +x ./garm-cli && \
-    chmod +x ./garm-provider-k8s
+RUN chmod +x ./bin/entrypoint.sh && \
+  chmod +x ./bin/garm && \
+  chmod +x ./bin/garm-cli && \
+  chmod +x ./bin/garm-provider-k8s
 
-RUN chown 1001:mb /home/mb/bin/garm && \
-    chmod u+w /home/mb/bin/garm
-
-USER 1001
+USER 65543:65543
 
 EXPOSE 9997
 
-ENTRYPOINT ["/home/mb/bin/garm/entrypoint.sh"]
+ENTRYPOINT ["/opt/garm/bin/entrypoint.sh"]

@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: MIT
 
 resources:
+  - pvc.yaml
   - clusterrole-binding.yaml
   - clusterrole.yaml
   - deployment.yaml
   - namespace.yaml
   - service.yaml
   - serviceaccount.yaml
+  - configmap.yaml

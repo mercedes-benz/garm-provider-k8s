@@ -1,5 +1,5 @@
-github.com/cloudbase/garm-provider-common v0.0.0-20231004090057-002b44de93b7 h1:z2HPxM57SxbdYKc//b7hkwrCTORiWsxoyrUiFEKi3WU=
-github.com/cloudbase/garm-provider-common v0.0.0-20231004090057-002b44de93b7/go.mod h1:NgR629o2NYWTffZt3uURmu3orjMDQ2vh6KJ5ytwh7Qw=
+github.com/cloudbase/garm-provider-common v0.1.0 h1:gc2n8nsLjt7G3InAfqZ+75iZjSIUkIx86d6/DFA2+jc=
+github.com/cloudbase/garm-provider-common v0.1.0/go.mod h1:igxJRT3OlykERYc6ssdRQXcb+BCaeSfnucg6I0OSoDc=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
@@ -31,14 +31,9 @@ github.com/golang/protobuf v1.5.3 h1:KhyjKVUg7Usr/dYsdSqoFveMYd5ko72D+zANwlG1mmg
 github.com/golang/protobuf v1.5.3/go.mod h1:XVQd3VNwM+JqD3oG2Ue2ip4fOMUkwXdXDdiuN0vRsmY=
 github.com/google/gnostic-models v0.6.8 h1:yo/ABAfM5IMRsS1VnXjTBvUb61tFIHozhlYvRgGre9I=
 github.com/google/gnostic-models v0.6.8/go.mod h1:5n7qKqH0f5wFt+aWF8CW6pZLLNOfYuF5OpfBSENuI8U=
-github.com/google/go-cmp v0.5.2/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.5/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/gNBxE=
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 github.com/google/go-cmp v0.5.9/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
-github.com/google/go-github/v55 v55.0.1-0.20230921135834-aa3fcbe7aabc h1:wZybOt4gfOPJmwpe3CZFJYoREaqgngGeo1Y29zZePhg=
-github.com/google/go-github/v55 v55.0.1-0.20230921135834-aa3fcbe7aabc/go.mod h1:dx9O5B1Z9+WYDRfSIkPdJ/jszShiNtl++jbgL/3OM2c=
-github.com/google/go-querystring v1.1.0 h1:AnCroh3fv4ZBgVIf1Iwtovgjaw/GiKJo8M8yD/fhyJ8=
-github.com/google/go-querystring v1.1.0/go.mod h1:Kcdr2DB4koayq7X8pmAG4sNG59So17icRSOU623lUBU=
 github.com/google/gofuzz v1.0.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=
 github.com/google/gofuzz v1.2.0 h1:xRy4A+RhZaiKjJ1bPfwQ8sedCA+YS2YcCHW6ec7JMi0=
 github.com/google/gofuzz v1.2.0/go.mod h1:dBl0BpW6vV/+mYPU4Po3pmUjxk6FQPldtuIdl/M65Eg=

@@ -12,24 +12,23 @@ import (
 	"github.com/cloudbase/garm-provider-common/params"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/mercedes-benz/garm-provider-k8s/client"
-	"github.com/mercedes-benz/garm-provider-k8s/config"
 	"github.com/mercedes-benz/garm-provider-k8s/internal/spec"
+	"github.com/mercedes-benz/garm-provider-k8s/pkg/config"
 	"github.com/mercedes-benz/garm-provider-k8s/pkg/diff"
 )
 
 type Provider struct {
 	ControllerID string
-	Config       *config.Config
-	KubeClient   client.IKubeClientWrapper
+	ClientSet    kubernetes.Interface
 }
 
 func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.BootstrapInstance) (params.ProviderInstance, error) {
 	podName := strings.ToLower(bootstrapParams.Name)
 	labels := spec.ParamsToPodLabels(p.ControllerID, bootstrapParams)
-	fullImageName := spec.GetFullImagePath(p.Config.ContainerRegistry, bootstrapParams.Image)
+	fullImageName := spec.GetFullImagePath(config.Config.ContainerRegistry, bootstrapParams.Image)
 	resourceRequirements := spec.FlavourToResourceRequirements(spec.Flavour(bootstrapParams.Flavor))
 
 	gitHubScopeDetails, err := spec.ExtractGitHubScopeDetails(bootstrapParams.RepoURL)
@@ -46,18 +45,18 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      podName,
-			Namespace: p.Config.RunnerNamespace,
+			Namespace: config.Config.RunnerNamespace,
 			Labels:    labels,
 		},
 		Spec: corev1.PodSpec{
-			RestartPolicy: "Never",
+			RestartPolicy: corev1.RestartPolicyNever,
 			Containers: []corev1.Container{
 				{
 					Name:            "runner",
 					Image:           fullImageName,
 					Resources:       resourceRequirements,
 					Env:             envs,
-					ImagePullPolicy: "Always",
+					ImagePullPolicy: corev1.PullAlways,
 				},
 			},
 		},
@@ -68,17 +67,19 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 		return params.ProviderInstance{}, err
 	}
 
-	mergedPod, err := mergePodSpecs(pod, p.Config.PodTemplate)
+	mergedPod, err := mergePodSpecs(pod, config.Config.PodTemplate)
 	if err != nil {
 		return params.ProviderInstance{}, err
 	}
 
-	createdPod, err := p.KubeClient.CreatePod(mergedPod, p.Config.RunnerNamespace)
+	pod, err = p.ClientSet.CoreV1().
+		Pods(config.Config.RunnerNamespace).
+		Create(context.Background(), mergedPod, metav1.CreateOptions{})
 	if err != nil {
-		return params.ProviderInstance{}, fmt.Errorf("error calling CreateInstance: can not create pod %v in namespace %v: %w", pod.Name, p.Config.RunnerNamespace, err)
+		return params.ProviderInstance{}, fmt.Errorf("error calling CreateInstance: can not create pod %v: %w", pod.Name, err)
 	}
 
-	result, err := spec.PodToInstance(createdPod, params.InstanceRunning)
+	result, err := spec.PodToInstance(pod, params.InstanceRunning)
 	if err != nil {
 		return params.ProviderInstance{}, fmt.Errorf("error calling CreateInstance: can not map pod %v to params.Instance: %w", pod.Name, err)
 	}
@@ -108,7 +109,9 @@ func mergePodSpecs(pod *corev1.Pod, template corev1.PodTemplateSpec) (*corev1.Po
 
 func (p Provider) DeleteInstance(_ context.Context, instance string) error {
 	podName := strings.ToLower(instance)
-	err := p.KubeClient.DeletePod(podName, p.Config.RunnerNamespace)
+	err := p.ClientSet.CoreV1().
+		Pods(config.Config.RunnerNamespace).
+		Delete(context.Background(), podName, metav1.DeleteOptions{})
 	if err != nil {
 		return fmt.Errorf("error calling DeleteInstance: can not delete instance %s: %w", instance, err)
 	}
@@ -117,7 +120,10 @@ func (p Provider) DeleteInstance(_ context.Context, instance string) error {
 
 func (p Provider) GetInstance(_ context.Context, instance string) (params.ProviderInstance, error) {
 	podName := strings.ToLower(instance)
-	pod, err := p.KubeClient.GetPod(podName, p.Config.RunnerNamespace)
+
+	pod, err := p.ClientSet.CoreV1().
+		Pods(config.Config.RunnerNamespace).
+		Get(context.Background(), podName, metav1.GetOptions{})
 	if err != nil {
 		return params.ProviderInstance{}, fmt.Errorf("error calling GetInstance: can not get instance %s: %s", instance, err)
 	}
@@ -134,7 +140,18 @@ func (p Provider) ListInstances(_ context.Context, poolID string) ([]params.Prov
 	labels := make(map[string]string)
 	labels[spec.GarmPoolIDLabel] = spec.ToValidLabel(poolID)
 
-	pods, err := p.KubeClient.ListPodsByLabels(labels, p.Config.RunnerNamespace)
+	labelSelector := metav1.LabelSelector{MatchLabels: labels}
+	labelSelectorStr, err := metav1.LabelSelectorAsSelector(&labelSelector)
+	if err != nil {
+		return []params.ProviderInstance{}, err
+	}
+
+	pods, err := p.ClientSet.
+		CoreV1().
+		Pods(config.Config.RunnerNamespace).
+		List(context.Background(), metav1.ListOptions{
+			LabelSelector: labelSelectorStr.String(),
+		})
 	if err != nil {
 		return []params.ProviderInstance{}, fmt.Errorf("could not list pods: %w", err)
 	}
@@ -156,13 +173,26 @@ func (p Provider) RemoveAllInstances(ctx context.Context) error {
 	labels := make(map[string]string)
 	labels[spec.GarmControllerIDLabel] = p.ControllerID
 
-	pods, err := p.KubeClient.ListPodsByLabels(labels, "")
+	labelSelector := metav1.LabelSelector{MatchLabels: labels}
+	labelSelectorStr, err := metav1.LabelSelectorAsSelector(&labelSelector)
+	if err != nil {
+		return err
+	}
+
+	pods, err := p.ClientSet.
+		CoreV1().
+		Pods(config.Config.RunnerNamespace).
+		List(context.Background(), metav1.ListOptions{
+			LabelSelector: labelSelectorStr.String(),
+		})
 	if err != nil {
 		return err
 	}
 
 	for _, pod := range pods.Items {
-		err = p.KubeClient.DeletePod(pod.Name, pod.Namespace)
+		err := p.ClientSet.CoreV1().
+			Pods(config.Config.RunnerNamespace).
+			Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
 		if err != nil {
 			log.Error(err, fmt.Sprintf("Error deleting some pods: %v in namespace %v", pod.Name, pod.Namespace))
 		}
@@ -178,14 +208,9 @@ func (p Provider) Start(_ context.Context, instance string) error {
 	panic(fmt.Sprintf("Start() not implemented, called with instance: %s", instance))
 }
 
-func NewKubernetesProvider(
-	kubeClient client.IKubeClientWrapper,
-	config *config.Config,
-	controllerID string,
-) (*Provider, error) {
+func NewKubernetesProvider(clientSet kubernetes.Interface, controllerID string) *Provider {
 	return &Provider{
-		KubeClient:   kubeClient,
-		Config:       config,
 		ControllerID: controllerID,
-	}, nil
+		ClientSet:    clientSet,
+	}
 }

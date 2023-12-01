@@ -53,17 +53,12 @@ provider_type = "external"
 [provider.external]
 config_file = "/path/to/garm-provider-k8s-config.yaml"
 provider_executable = "/path/to/provider/binary/garm-provider-k8s"
+environment_variables = ["KUBERNETES_"]
 ```
 
 ## 💻 Development
 
 For local development, please read the [development guide](DEVELOPMENT.md).
-
-## 📋 ADRs
-
-To make some assumptions and corresponding decisions transparent, we use ADRs (Architecture Decision Records) to document them.
-
-All ADRs can be found [here](docs/architectural-decision-records.md).
 
 ## Contributing
 

@@ -31,6 +31,5 @@ local_resource(
     deps=["./runner"]
 )
 
-# deploy garm manifests via 'make apply'
-templated_yaml = local("RUNNER_IMAGE=" + image_tag + " make template")
+templated_yaml = kustomize('hack/local-development/kubernetes')
 k8s_yaml(templated_yaml)

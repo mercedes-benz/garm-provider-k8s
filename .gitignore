@@ -5,3 +5,4 @@
 /hack/bin/garm-provider-k8s
 /hack/config/garm-provider-k8s-config.yaml
 /hack/config/kubeconfig
+/hack/local-development/kubernetes/configmap.yaml

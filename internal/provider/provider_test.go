@@ -14,12 +14,11 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	testclient "k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/kubernetes/fake"
 
-	"github.com/mercedes-benz/garm-provider-k8s/client"
-	"github.com/mercedes-benz/garm-provider-k8s/config"
 	"github.com/mercedes-benz/garm-provider-k8s/internal/provider"
 	"github.com/mercedes-benz/garm-provider-k8s/internal/spec"
+	"github.com/mercedes-benz/garm-provider-k8s/pkg/config"
 )
 
 var (
@@ -32,7 +31,7 @@ var (
 func TestCreateInstance(t *testing.T) {
 	testCases := []struct {
 		name                     string
-		config                   *config.Config
+		config                   *config.ProviderConfig
 		bootstrapParams          params.BootstrapInstance
 		expectedProviderInstance params.ProviderInstance
 		expectedPodInstance      *corev1.Pod
@@ -41,7 +40,7 @@ func TestCreateInstance(t *testing.T) {
 	}{
 		{
 			name: "Valid bootstrapParams and merge pod template spec",
-			config: &config.Config{
+			config: &config.ProviderConfig{
 				KubeConfigPath:    "",
 				ContainerRegistry: "localhost:5000",
 				RunnerNamespace:   "runner",
@@ -133,6 +132,7 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					},
+					RestartPolicy: corev1.RestartPolicyNever,
 					Containers: []corev1.Container{
 						{
 							Name:  "runner",
@@ -222,7 +222,7 @@ func TestCreateInstance(t *testing.T) {
 		},
 		{
 			name: "Valid bootstrapParams and merge pod template spec with added sidecar",
-			config: &config.Config{
+			config: &config.ProviderConfig{
 				KubeConfigPath:    "",
 				ContainerRegistry: "localhost:5000",
 				RunnerNamespace:   "runner",
@@ -304,6 +304,7 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					},
+					RestartPolicy: corev1.RestartPolicyNever,
 					Containers: []corev1.Container{
 						{
 							Name:  "runner",
@@ -403,7 +404,7 @@ func TestCreateInstance(t *testing.T) {
 		},
 		{
 			name: "Valid bootstrapParams no pod template spec",
-			config: &config.Config{
+			config: &config.ProviderConfig{
 				KubeConfigPath:    "",
 				ContainerRegistry: "localhost:5000",
 				RunnerNamespace:   "runner",
@@ -461,6 +462,7 @@ func TestCreateInstance(t *testing.T) {
 							},
 						},
 					},
+					RestartPolicy: corev1.RestartPolicyNever,
 					Containers: []corev1.Container{
 						{
 							Name:  "runner",
@@ -526,7 +528,7 @@ func TestCreateInstance(t *testing.T) {
 									MountPath: "/runner",
 								},
 							},
-							ImagePullPolicy: "Always",
+							ImagePullPolicy: corev1.PullAlways,
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
 									corev1.ResourceCPU:    resource.MustParse("500m"),
@@ -548,20 +550,27 @@ func TestCreateInstance(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockKubeClient := testclient.NewSimpleClientset(tc.runtimeObjects...)
-			mockKubeClientWrapper := &client.KubeClientWrapper{Client: mockKubeClient}
-			p, err := provider.NewKubernetesProvider(mockKubeClientWrapper, tc.config, controllerID)
-			if err != nil {
-				t.Errorf("cannot create provider: %s", err.Error())
-			}
+			// create the provider config
+			config.Config = *tc.config
 
+			// create a fake kubernetes client
+			client := fake.NewSimpleClientset()
+
+			// initialize the provider
+			p := provider.NewKubernetesProvider(client, controllerID)
+
+			// trigger the instance creation
 			actual, err := p.CreateInstance(context.Background(), tc.bootstrapParams)
 			assert.Equal(t, tc.err, err)
 
-			createdPod, err := mockKubeClient.CoreV1().Pods("runner").Get(context.Background(), providerID, metav1.GetOptions{})
+			// get the created pod
+			createdPod, err := client.CoreV1().Pods(config.Config.RunnerNamespace).Get(context.Background(), actual.ProviderID, metav1.GetOptions{})
 			assert.Equal(t, tc.err, err)
 
+			// compare created instance with expected instance
 			assert.Equal(t, tc.expectedProviderInstance, actual)
+
+			// compare created pod with expected pod
 			assert.Equal(t, tc.expectedPodInstance, createdPod)
 		})
 	}
@@ -570,14 +579,18 @@ func TestCreateInstance(t *testing.T) {
 func TestGetInstance(t *testing.T) {
 	testCases := []struct {
 		name                     string
-		config                   *config.Config
+		config                   *config.ProviderConfig
 		expectedProviderInstance params.ProviderInstance
 		runtimeObjects           []runtime.Object
 		wantErr                  error
 	}{
 		{
-			name:   "Get Instance",
-			config: &config.Config{},
+			name: "Get Instance",
+			config: &config.ProviderConfig{
+				KubeConfigPath:    "",
+				ContainerRegistry: "localhost:5000",
+				RunnerNamespace:   "runner",
+			},
 			expectedProviderInstance: params.ProviderInstance{
 				ProviderID: providerID,
 				Name:       instanceName,
@@ -704,15 +717,13 @@ func TestGetInstance(t *testing.T) {
 			},
 		},
 	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockKubeClient := testclient.NewSimpleClientset(tc.runtimeObjects...)
-			mockKubeClientWrapper := &client.KubeClientWrapper{Client: mockKubeClient}
-			p, err := provider.NewKubernetesProvider(mockKubeClientWrapper, tc.config, controllerID)
-			if err != nil {
-				t.Errorf("cannot create provider: %s", err.Error())
-			}
+			config.Config = *tc.config
+
+			client := fake.NewSimpleClientset(tc.runtimeObjects...)
+
+			p := provider.NewKubernetesProvider(client, controllerID)
 
 			actual, err := p.GetInstance(context.Background(), instanceName)
 
@@ -725,14 +736,14 @@ func TestGetInstance(t *testing.T) {
 func TestDeleteInstance(t *testing.T) {
 	testCases := []struct {
 		name                     string
-		config                   *config.Config
+		config                   *config.ProviderConfig
 		expectedProviderInstance params.ProviderInstance
 		runtimeObjects           []runtime.Object
 		wantErr                  error
 	}{
 		{
 			name: "Delete Instance Success",
-			config: &config.Config{
+			config: &config.ProviderConfig{
 				KubeConfigPath:    "",
 				ContainerRegistry: "localhost:5000",
 				RunnerNamespace:   "runner",
@@ -857,22 +868,42 @@ func TestDeleteInstance(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockKubeClient := testclient.NewSimpleClientset(tc.runtimeObjects...)
-			mockKubeClientWrapper := &client.KubeClientWrapper{Client: mockKubeClient}
-			p, err := provider.NewKubernetesProvider(mockKubeClientWrapper, tc.config, controllerID)
-			if err != nil {
-				t.Errorf("cannot create provider: %s", err.Error())
-			}
+			// create the provider config
+			config.Config = *tc.config
 
-			pods, err := p.KubeClient.ListPods(p.Config.RunnerNamespace)
+			// create a fake kubernetes client
+			client := fake.NewSimpleClientset(tc.runtimeObjects...)
+
+			// initialize the provider
+			p := provider.NewKubernetesProvider(client, controllerID)
+
+			labels := make(map[string]string)
+			labels[spec.GarmPoolIDLabel] = spec.ToValidLabel(poolID)
+
+			labelSelector := metav1.LabelSelector{MatchLabels: labels}
+			labelSelectorStr, _ := metav1.LabelSelectorAsSelector(&labelSelector)
+
+			// get all pods in the configured namespace
+			pods, err := p.ClientSet.
+				CoreV1().
+				Pods(config.Config.RunnerNamespace).
+				List(context.Background(), metav1.ListOptions{
+					LabelSelector: labelSelectorStr.String(),
+				})
 			assert.NoError(t, err)
 			assert.Equal(t, len(pods.Items), len(tc.runtimeObjects))
 
+			// trigger the instance deletion
 			err = p.DeleteInstance(context.Background(), instanceName)
 			assert.Equal(t, tc.wantErr, err)
 
 			if tc.wantErr == nil && err == nil {
-				pods, err = p.KubeClient.ListPods(p.Config.RunnerNamespace)
+				pods, err := p.ClientSet.
+					CoreV1().
+					Pods(config.Config.RunnerNamespace).
+					List(context.Background(), metav1.ListOptions{
+						LabelSelector: labelSelectorStr.String(),
+					})
 				assert.NoError(t, err)
 				assert.Equal(t, len(pods.Items), 0)
 			}
@@ -883,13 +914,13 @@ func TestDeleteInstance(t *testing.T) {
 func TestRemoveAllInstances(t *testing.T) {
 	testCases := []struct {
 		name           string
-		config         *config.Config
+		config         *config.ProviderConfig
 		runtimeObjects []runtime.Object
 		wantErr        error
 	}{
 		{
 			name: "Remove All Instances Success",
-			config: &config.Config{
+			config: &config.ProviderConfig{
 				KubeConfigPath:    "",
 				ContainerRegistry: "localhost:5000",
 				RunnerNamespace:   "runner",
@@ -1128,14 +1159,24 @@ func TestRemoveAllInstances(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockKubeClient := testclient.NewSimpleClientset(tc.runtimeObjects...)
-			mockKubeClientWrapper := &client.KubeClientWrapper{Client: mockKubeClient}
-			p, err := provider.NewKubernetesProvider(mockKubeClientWrapper, tc.config, controllerID)
-			if err != nil {
-				t.Errorf("cannot create provider: %s", err.Error())
-			}
+			config.Config = *tc.config
 
-			pods, err := p.KubeClient.ListPods(p.Config.RunnerNamespace)
+			client := fake.NewSimpleClientset(tc.runtimeObjects...)
+
+			p := provider.NewKubernetesProvider(client, controllerID)
+
+			labels := make(map[string]string)
+			labels[spec.GarmPoolIDLabel] = spec.ToValidLabel(poolID)
+
+			labelSelector := metav1.LabelSelector{MatchLabels: labels}
+			labelSelectorStr, _ := metav1.LabelSelectorAsSelector(&labelSelector)
+
+			pods, err := p.ClientSet.
+				CoreV1().
+				Pods(config.Config.RunnerNamespace).
+				List(context.Background(), metav1.ListOptions{
+					LabelSelector: labelSelectorStr.String(),
+				})
 			assert.NoError(t, err)
 			assert.Equal(t, len(pods.Items), len(tc.runtimeObjects))
 
@@ -1143,7 +1184,12 @@ func TestRemoveAllInstances(t *testing.T) {
 			assert.Equal(t, tc.wantErr, err)
 
 			if tc.wantErr == nil && err == nil {
-				pods, err = p.KubeClient.ListPods(p.Config.RunnerNamespace)
+				pods, err := p.ClientSet.
+					CoreV1().
+					Pods(config.Config.RunnerNamespace).
+					List(context.Background(), metav1.ListOptions{
+						LabelSelector: labelSelectorStr.String(),
+					})
 				assert.NoError(t, err)
 				assert.Equal(t, len(pods.Items), 0)
 			}
