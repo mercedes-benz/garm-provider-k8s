@@ -1,11 +1,11 @@
-# SPDX-License-Identifier: MIT
-
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
-  name: garm-server
-  namespace: runner
+  name: garm-provider-k8s
 rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "watch", "list", "create", "update", "patch", "delete"]
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "watch", "list", "create", "update", "patch", "delete"]
