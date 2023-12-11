@@ -287,6 +287,10 @@ func GetRunnerEnvs(gitHubScope GitHubScopeDetails, bootstrapParams params.Bootst
 			Name:  "CALLBACK_URL",
 			Value: bootstrapParams.CallbackURL,
 		},
+		{
+			Name:  "JIT_CONFIG_ENABLED",
+			Value: fmt.Sprintf("%t", bootstrapParams.JitConfigEnabled),
+		},
 	}
 }
 
