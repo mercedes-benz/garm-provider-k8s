@@ -570,6 +570,163 @@ func TestCreateInstance(t *testing.T) {
 			runtimeObjects: []runtime.Object{},
 			err:            nil,
 		},
+		{
+			name: "Runner with ImagePullSecret",
+			config: &config.ProviderConfig{
+				KubeConfigPath:    "",
+				ContainerRegistry: "localhost:5000",
+				RunnerNamespace:   "runner",
+				ImagePullSecrets:  []string{"my-secret1", "my-secret2"},
+				PodTemplate: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{},
+					},
+				},
+			},
+			bootstrapParams: params.BootstrapInstance{
+				Name:          instanceName,
+				PoolID:        poolID,
+				Flavor:        "small",
+				RepoURL:       "https://github.com/testorg",
+				InstanceToken: "test-token",
+				MetadataURL:   "https://metadata.test",
+				CallbackURL:   "https://callback.test/status",
+				Image:         "runner:ubuntu-22.04",
+				OSType:        "linux",
+				OSArch:        "arm64",
+				Labels:        []string{"road-runner", "linux", "arm64", "kubernetes"},
+			},
+			expectedProviderInstance: params.ProviderInstance{
+				ProviderID: providerID,
+				Name:       instanceName,
+				OSType:     "linux",
+				OSName:     "",
+				OSVersion:  "",
+				OSArch:     "arm64",
+				Status:     "running",
+			},
+			expectedPodInstance: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      providerID,
+					Namespace: "runner",
+					Labels: map[string]string{
+						spec.GarmInstanceNameLabel: instanceName,
+						spec.GarmFlavourLabel:      "small",
+						spec.GarmOSArchLabel:       "arm64",
+						spec.GarmOSTypeLabel:       "linux",
+						spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",
+						spec.GarmControllerIDLabel: controllerID,
+						spec.GarmRunnerGroupLabel:  "",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Volumes: []corev1.Volume{
+						{
+							Name: "runner",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{
+									Medium:    "",
+									SizeLimit: nil,
+								},
+							},
+						},
+					},
+					RestartPolicy: corev1.RestartPolicyNever,
+					ImagePullSecrets: []corev1.LocalObjectReference{
+						{
+							Name: "my-secret1",
+						},
+						{
+							Name: "my-secret2",
+						},
+					},
+					Containers: []corev1.Container{
+						{
+							Name:  "runner",
+							Image: "localhost:5000/runner:ubuntu-22.04",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "RUNNER_ORG",
+									Value: "testorg",
+								},
+								{
+									Name:  "RUNNER_REPO",
+									Value: "",
+								},
+								{
+									Name:  "RUNNER_ENTERPRISE",
+									Value: "",
+								},
+								{
+									Name:  "RUNNER_GROUP",
+									Value: "",
+								},
+								{
+									Name:  "RUNNER_NAME",
+									Value: instanceName,
+								},
+								{
+									Name:  "RUNNER_LABELS",
+									Value: "road-runner,linux,arm64,kubernetes",
+								},
+								{
+									Name:  "RUNNER_WORKDIR",
+									Value: "/runner/_work/",
+								},
+								{
+									Name:  "GITHUB_URL",
+									Value: "https://github.com",
+								},
+								{
+									Name:  "RUNNER_EPHEMERAL",
+									Value: "true",
+								},
+								{
+									Name:  "RUNNER_TOKEN",
+									Value: "dummy",
+								},
+								{
+									Name:  "METADATA_URL",
+									Value: "https://metadata.test",
+								},
+								{
+									Name:  "BEARER_TOKEN",
+									Value: "test-token",
+								},
+								{
+									Name:  "CALLBACK_URL",
+									Value: "https://callback.test/status",
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "runner",
+									ReadOnly:  false,
+									MountPath: "/runner",
+								},
+							},
+							ImagePullPolicy: corev1.PullAlways,
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("500m"),
+									corev1.ResourceMemory: resource.MustParse("500Mi"),
+								},
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("500m"),
+									corev1.ResourceMemory: resource.MustParse("500Mi"),
+								},
+							},
+						},
+					},
+				},
+			},
+			runtimeObjects: []runtime.Object{},
+			err:            nil,
+		},
 	}
 
 	for _, tc := range testCases {

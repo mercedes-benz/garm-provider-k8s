@@ -65,6 +65,14 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 		},
 	}
 
+	if len(config.Config.ImagePullSecrets) > 0 {
+		var secrets []corev1.LocalObjectReference
+		for _, name := range config.Config.ImagePullSecrets {
+			secrets = append(secrets, corev1.LocalObjectReference{Name: name})
+		}
+		pod.Spec.ImagePullSecrets = secrets
+	}
+
 	err = p.ensureNamespace(config.Config.RunnerNamespace)
 	if err != nil {
 		return params.ProviderInstance{}, fmt.Errorf("ensuring runner namespace %s failed: %w", config.Config.RunnerNamespace, err)
@@ -103,7 +111,7 @@ func (p Provider) ensureNamespace(runnerNamespace string) error {
 		return err
 	}
 
-	// if namespace doesn't exists
+	// if namespace doesn't exist
 	// there is no need for creating again
 	if apierrors.IsNotFound(err) {
 		_, err = p.ClientSet.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{

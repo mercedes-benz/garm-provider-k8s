@@ -17,6 +17,7 @@ import (
 type ProviderConfig struct {
 	KubeConfigPath    string                 `koanf:"kubeConfigPath"`
 	ContainerRegistry string                 `koanf:"containerRegistry"`
+	ImagePullSecrets  []string               `koanf:"imagePullSecrets"`
 	RunnerNamespace   string                 `koanf:"runnerNamespace"`
 	PodTemplate       corev1.PodTemplateSpec `koanf:"podTemplate"`
 }
