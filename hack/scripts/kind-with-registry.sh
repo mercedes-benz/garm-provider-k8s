@@ -20,7 +20,7 @@ fi
 KIND_CLUSTER_NAME=${GARM_KIND_CLUSTER_NAME:-"garm"}
 
 # 1. If kind cluster already exists exit.
-if [[ "$(kind get clusters)" =~ .*"${KIND_CLUSTER_NAME}".* ]]; then
+if [[ "$(kind get clusters)" = "${KIND_CLUSTER_NAME}" ]]; then
   echo "kind cluster already exists, moving on"
   exit 0
 fi
