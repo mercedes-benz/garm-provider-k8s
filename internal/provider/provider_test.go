@@ -82,17 +82,18 @@ func TestCreateInstance(t *testing.T) {
 				},
 			},
 			bootstrapParams: params.BootstrapInstance{
-				Name:          instanceName,
-				PoolID:        poolID,
-				Flavor:        "small",
-				RepoURL:       "https://github.com/testorg",
-				InstanceToken: "test-token",
-				MetadataURL:   "https://metadata.test",
-				CallbackURL:   "https://callback.test/status",
-				Image:         "runner:ubuntu-22.04",
-				OSType:        "linux",
-				OSArch:        "arm64",
-				Labels:        []string{"road-runner", "linux", "arm64", "kubernetes"},
+				Name:             instanceName,
+				PoolID:           poolID,
+				Flavor:           "small",
+				RepoURL:          "https://github.com/testorg",
+				InstanceToken:    "test-token",
+				MetadataURL:      "https://metadata.test",
+				CallbackURL:      "https://callback.test/status",
+				Image:            "runner:ubuntu-22.04",
+				OSType:           "linux",
+				OSArch:           "arm64",
+				Labels:           []string{"road-runner", "linux", "arm64", "kubernetes"},
+				JitConfigEnabled: true,
 			},
 			expectedProviderInstance: params.ProviderInstance{
 				ProviderID: providerID,
@@ -203,6 +204,10 @@ func TestCreateInstance(t *testing.T) {
 								{
 									Name:  "CALLBACK_URL",
 									Value: "https://callback.test/status",
+								},
+								{
+									Name:  "JIT_CONFIG_ENABLED",
+									Value: "true",
 								},
 							},
 							VolumeMounts: []corev1.VolumeMount{
@@ -386,6 +391,10 @@ func TestCreateInstance(t *testing.T) {
 									Name:  "CALLBACK_URL",
 									Value: "https://callback.test/status",
 								},
+								{
+									Name:  "JIT_CONFIG_ENABLED",
+									Value: "false",
+								},
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{
@@ -543,6 +552,10 @@ func TestCreateInstance(t *testing.T) {
 								{
 									Name:  "CALLBACK_URL",
 									Value: "https://callback.test/status",
+								},
+								{
+									Name:  "JIT_CONFIG_ENABLED",
+									Value: "false",
 								},
 							},
 							VolumeMounts: []corev1.VolumeMount{
