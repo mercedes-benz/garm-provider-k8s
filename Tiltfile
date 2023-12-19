@@ -47,11 +47,11 @@ image_tag="localhost:5000/runner:linux-ubuntu-22.04-" + cpu_arch
 
 local_resource(
     "build runner",
-    cmd="RUNNER_IMAGE=" + image_tag + " make docker-build-runner",
+    cmd="RUNNER_IMAGE=" + image_tag + " make docker-build-summerwind-runner",
     auto_init=True,
     trigger_mode=TRIGGER_MODE_AUTO,
     labels=["runner"],
-    deps=["./runner"]
+    deps=["./runner/summerwind"]
 )
 
 # take care of the kubernetes manifests where garm with the provider binary is deployed

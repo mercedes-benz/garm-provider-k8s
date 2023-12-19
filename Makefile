@@ -92,9 +92,9 @@ docker-build: ## Build a garm image with the k8s provider
 	docker build -t garm-with-k8s:latest ./hack
 	docker push localhost:5000/garm-with-k8s:latest
 
-.PHONY: docker-build-runner
-docker-build-runner: ## Build the used runner image
-	docker build -t $(RUNNER_IMAGE) ./runner
+.PHONY: docker-build-summerwind-runner
+docker-build-summerwind-runner: ## Build the used runner image
+	docker build -t $(RUNNER_IMAGE) ./runner/summerwind
 	docker push $(RUNNER_IMAGE)
 
 .PHONY: template
