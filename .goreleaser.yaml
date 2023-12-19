@@ -13,6 +13,8 @@ builds:
       - amd64
       - arm64
     main: ./cmd/garm-provider-k8s
+    ldflags:
+      - -s -w
 
 archives:
   - format: tar.gz
