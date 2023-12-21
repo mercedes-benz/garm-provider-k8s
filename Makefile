@@ -111,7 +111,7 @@ endif
 
 .PHONY: prepare-operator
 prepare-operator: ## Prepare garm-operator for local development
-	curl -L https://github.com/mercedes-benz/garm-operator/releases/download/v0.1.3/garm_operator_all.yaml | \
+	curl -L https://github.com/mercedes-benz/garm-operator/releases/download/v0.2.0/garm_operator_all.yaml | \
 	GARM_SERVER_URL=http://garm-server.garm-server.svc:9997 \
 	GARM_SERVER_USERNAME=admin \
 	GARM_SERVER_PASSWORD=LmrBG1KcBOsDfNKq4cQTGpc0hJ0kejkk \

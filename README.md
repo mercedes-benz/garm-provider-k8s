@@ -1,5 +1,9 @@
 <!-- SPDX-License-Identifier: MIT -->
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/mercedes-benz/garm-operator)](https://goreportcard.com/report/github.com/mercedes-benz/garm-provider-k8s) 
+![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/mercedes-benz/garm-provider-k8s?sort=semver)
+[![build](https://github.com/mercedes-benz/garm-provider-k8s/actions/workflows/build.yaml/badge.svg)](https://github.com/mercedes-benz/garm-provider-k8s/actions/workflows/build.yaml)
+
 # garm-provider-k8s
 
 <!-- toc -->
