@@ -92,6 +92,31 @@ runnerNamespace: "this_is_An_invalid_namespace_name"
 `,
 			wantError: true,
 		},
+		{
+			name: "valid configuration with imagePullSecrets",
+			expected: config.ProviderConfig{
+				KubeConfigPath:    "/path/to/kubeconfig",
+				ContainerRegistry: "sample.registry.com",
+				RunnerNamespace:   "test-namespace",
+				PodTemplate: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{},
+					},
+				},
+				ImagePullSecrets: []string{
+					"my-imagepullsecret1",
+					"my-imagepullsecret2",
+				},
+			},
+			config: `
+kubeConfigPath: "/path/to/kubeconfig"
+containerRegistry: "sample.registry.com"
+runnerNamespace: "test-namespace"
+imagePullSecrets:
+  - my-imagepullsecret1
+  - my-imagepullsecret2
+`,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -114,6 +139,7 @@ runnerNamespace: "this_is_An_invalid_namespace_name"
 				assert.Equal(t, tc.expected.ContainerRegistry, config.Config.ContainerRegistry)
 				assert.Equal(t, tc.expected.RunnerNamespace, config.Config.RunnerNamespace)
 				assert.Equal(t, tc.expected.PodTemplate, config.Config.PodTemplate)
+				assert.Equal(t, tc.expected.ImagePullSecrets, config.Config.ImagePullSecrets)
 			}
 
 			// empty the global config for the next run
