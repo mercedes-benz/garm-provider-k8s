@@ -20,6 +20,20 @@ function call() {
     curl --retry 5 --retry-delay 5 --retry-connrefused --fail -s -X POST -d "${PAYLOAD}" -H 'Accept: application/json' -H "Authorization: Bearer ${BEARER_TOKEN}" "${CALLBACK_URL}" || echo "failed to call home: exit code ($?)"
 }
 
+function systemInfo() {
+    if [ -f "/etc/os-release" ];then
+        . /etc/os-release
+    fi
+    OS_NAME=${NAME:-""}
+    OS_VERSION=${VERSION_ID:-""}
+    AGENT_ID=${1:-null}
+    # strip status from the callback url
+    [[ $CALLBACK_URL =~ ^(.*)/status(/)?$ ]] && CALLBACK_URL="${BASH_REMATCH[1]}" || true
+    SYSINFO_URL="${CALLBACK_URL}/system-info/"
+    PAYLOAD="{\"os_name\": \"$OS_NAME\", \"os_version\": \"$OS_VERSION\", \"agent_id\": $AGENT_ID}"
+    curl --retry 5 --retry-delay 5 --retry-connrefused --fail -s -X POST -d "${PAYLOAD}" -H 'Accept: application/json' -H "Authorization: Bearer ${BEARER_TOKEN}" "${SYSINFO_URL}" || true
+}
+
 function sendStatus() {
     MSG="$1"
     call "{\"status\": \"installing\", \"message\": \"$MSG\"}"
@@ -33,14 +47,11 @@ function fail() {
 
 function success() {
     MSG="$1"
-    ID=$2
-    if [ $JIT_CONFIG_ENABLED != "true" ] && [ -z "$ID" ]; then
+    ID=${2:-null}
+    if [ $JIT_CONFIG_ENABLED != "true" ] && [ $ID == "null" ]; then
         fail "agent ID is required when JIT_CONFIG_ENABLED is not true"
     fi
 
-    if [ -z "$ID" ]; then
-        ID="null"
-    fi
     call "{\"status\": \"idle\", \"message\": \"$MSG\", \"agent_id\": $ID}"
 }
 
@@ -133,5 +144,6 @@ if [ $JIT_CONFIG_ENABLED != "true" ]; then
     set -e
 fi
 
+systemInfo $AGENT_ID || true
 success "runner successfully installed" $AGENT_ID
 ./run.sh "$@"
