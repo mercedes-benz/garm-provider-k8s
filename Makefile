@@ -89,7 +89,7 @@ DEBUG = 0
 ##@ Local Development
 .PHONY: docker-build
 docker-build: ## Build a garm image with the k8s provider
-	docker build -t garm-with-k8s:latest ./hack
+	docker build -t localhost:5000/garm-with-k8s:latest ./hack
 	docker push localhost:5000/garm-with-k8s:latest
 
 .PHONY: docker-build-summerwind-runner

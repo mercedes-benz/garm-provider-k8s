@@ -38,19 +38,26 @@ func NewConfig(configPath string) error {
 		return err
 	}
 
+	// clear out flavours & podTemplate key so koanf does not try to unmarshal them later
 	Config.Flavours = unmarshalFlavours(k)
 	k.Delete("flavours")
+
+	Config.PodTemplate = unmarshalPodTemplateSpec(k)
+	k.Delete("podTemplate")
 
 	// unmarshal all koanf config keys into ProviderConfig struct
 	if err := k.Unmarshal("", &Config); err != nil {
 		return fmt.Errorf("failed to unmarshal config: %v", err)
 	}
 
-	Config.PodTemplate = unmarshalPodTemplateSpec(k)
-
 	// set the default namespace for runners
 	if Config.RunnerNamespace == "" {
 		Config.RunnerNamespace = "runner"
+	}
+
+	// will clear out the containers field in the merge. We don't want that.
+	if Config.PodTemplate.Spec.Containers == nil {
+		Config.PodTemplate.Spec.Containers = []corev1.Container{}
 	}
 
 	// validate the given runner namespace

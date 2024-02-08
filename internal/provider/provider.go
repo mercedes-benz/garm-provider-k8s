@@ -84,7 +84,7 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 		Pods(config.Config.RunnerNamespace).
 		Create(context.Background(), mergedPod, metav1.CreateOptions{})
 	if err != nil {
-		return params.ProviderInstance{}, fmt.Errorf("error calling CreateInstance: templete: %v", pod)
+		return params.ProviderInstance{}, fmt.Errorf("error calling CreateInstance: can not create pod %v: %w", pod.Name, err)
 	}
 
 	result, err := spec.PodToInstance(pod, params.InstanceRunning)

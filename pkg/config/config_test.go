@@ -6,12 +6,12 @@ import (
 	"os"
 	"testing"
 
-	"k8s.io/apimachinery/pkg/api/resource"
-
-	"github.com/mercedes-benz/garm-provider-k8s/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
+
+	"github.com/mercedes-benz/garm-provider-k8s/pkg/config"
 )
 
 func TestGetConfig(t *testing.T) {
