@@ -3,6 +3,7 @@
 package config
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 
@@ -11,14 +12,16 @@ import (
 	"github.com/knadh/koanf/v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/validation"
+	k8sYaml "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/yaml"
 )
 
 type ProviderConfig struct {
-	KubeConfigPath    string                 `koanf:"kubeConfigPath"`
-	ContainerRegistry string                 `koanf:"containerRegistry"`
-	RunnerNamespace   string                 `koanf:"runnerNamespace"`
-	PodTemplate       corev1.PodTemplateSpec `koanf:"podTemplate"`
+	KubeConfigPath    string                                 `koanf:"kubeConfigPath"`
+	ContainerRegistry string                                 `koanf:"containerRegistry"`
+	RunnerNamespace   string                                 `koanf:"runnerNamespace"`
+	PodTemplate       corev1.PodTemplateSpec                 `koanf:"podTemplate"`
+	Flavours          map[string]corev1.ResourceRequirements `koanf:"flavours"`
 }
 
 var Config ProviderConfig
@@ -35,21 +38,19 @@ func NewConfig(configPath string) error {
 		return err
 	}
 
+	Config.Flavours = unmarshalFlavours(k)
+	k.Delete("flavours")
+
 	// unmarshal all koanf config keys into ProviderConfig struct
 	if err := k.Unmarshal("", &Config); err != nil {
 		return fmt.Errorf("failed to unmarshal config: %v", err)
 	}
 
+	Config.PodTemplate = unmarshalPodTemplateSpec(k)
+
 	// set the default namespace for runners
 	if Config.RunnerNamespace == "" {
 		Config.RunnerNamespace = "runner"
-	}
-
-	// containers is a required field in a PodSpec, so if it's not part of the patch
-	// the conversion to unstructured will have a nil spec.containers field, which
-	// will clear out the containers field in the merge.  We don't want that.
-	if Config.PodTemplate.Spec.Containers == nil {
-		Config.PodTemplate.Spec.Containers = []corev1.Container{}
 	}
 
 	// validate the given runner namespace
@@ -92,4 +93,53 @@ func validateNamespace(namespace string) error {
 		return fmt.Errorf("namespace %s is invalid: %v", namespace, dnsValidationErrors)
 	}
 	return nil
+}
+
+func unmarshalPodTemplateSpec(k *koanf.Koanf) corev1.PodTemplateSpec {
+	defaultSpec := corev1.PodTemplateSpec{
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{},
+		},
+	}
+
+	// Extract the podTemplate as a raw map
+	podTemplateMap := k.Get("podTemplate")
+	if podTemplateMap == nil {
+		return defaultSpec
+	}
+
+	// Convert the map to a YAML string
+	podTemplateYAML, err := yaml.Marshal(podTemplateMap)
+	if err != nil {
+		return defaultSpec
+	}
+
+	var podTemplate corev1.PodTemplateSpec
+	decoder := k8sYaml.NewYAMLOrJSONDecoder(bytes.NewReader(podTemplateYAML), len(podTemplateYAML))
+	if err := decoder.Decode(&podTemplate); err != nil {
+		return defaultSpec
+	}
+	return podTemplate
+}
+
+func unmarshalFlavours(k *koanf.Koanf) map[string]corev1.ResourceRequirements {
+	var result map[string]corev1.ResourceRequirements
+
+	// Extract the podTemplate as a raw map
+	flavoursMap := k.Get("flavours")
+	if flavoursMap == nil {
+		return result
+	}
+
+	// Convert the map to a YAML string
+	flavoursYAML, err := yaml.Marshal(flavoursMap)
+	if err != nil {
+		return result
+	}
+
+	decoder := k8sYaml.NewYAMLOrJSONDecoder(bytes.NewReader(flavoursYAML), len(flavoursYAML))
+	if err := decoder.Decode(&result); err != nil {
+		return result
+	}
+	return result
 }

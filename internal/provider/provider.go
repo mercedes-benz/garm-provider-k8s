@@ -32,7 +32,7 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 	podName := strings.ToLower(bootstrapParams.Name)
 	labels := spec.ParamsToPodLabels(p.ControllerID, bootstrapParams)
 	fullImageName := spec.GetFullImagePath(config.Config.ContainerRegistry, bootstrapParams.Image)
-	resourceRequirements := spec.FlavourToResourceRequirements(spec.Flavour(bootstrapParams.Flavor))
+	resourceRequirements := spec.FlavourToResourceRequirements(bootstrapParams.Flavor)
 
 	gitHubScopeDetails, err := spec.ExtractGitHubScopeDetails(bootstrapParams.RepoURL)
 	if err != nil {
@@ -84,7 +84,7 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 		Pods(config.Config.RunnerNamespace).
 		Create(context.Background(), mergedPod, metav1.CreateOptions{})
 	if err != nil {
-		return params.ProviderInstance{}, fmt.Errorf("error calling CreateInstance: can not create pod %v: %w", pod.Name, err)
+		return params.ProviderInstance{}, fmt.Errorf("error calling CreateInstance: templete: %v", pod)
 	}
 
 	result, err := spec.PodToInstance(pod, params.InstanceRunning)

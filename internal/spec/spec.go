@@ -13,6 +13,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/json"
+
+	"github.com/mercedes-benz/garm-provider-k8s/pkg/config"
 )
 
 const (
@@ -33,14 +35,6 @@ type GitHubScopeDetails struct {
 	Org        string
 	Enterprise string
 }
-
-type Flavour string
-
-const (
-	Small  Flavour = "small"
-	Medium Flavour = "medium"
-	Large  Flavour = "large"
-)
 
 type (
 	OSType    string
@@ -114,29 +108,24 @@ func ParamsToPodLabels(controllerID string, bootstrapParams params.BootstrapInst
 	return labels
 }
 
-func FlavourToResourceRequirements(flavour Flavour) corev1.ResourceRequirements {
-	resourceCPU := "500m"
-	resourceMemory := "500Mi"
+func FlavourToResourceRequirements(flavour string) corev1.ResourceRequirements {
+	if _, ok := config.Config.Flavours[flavour]; !ok {
+		resourceCPURequest := "100m"
+		resourceMemoryRequest := "100Mi"
+		resourceMemoryLimit := "200Mi"
 
-	switch flavour {
-	case Medium:
-		resourceCPU = "1000m"
-		resourceMemory = "1Gi"
-	case Large:
-		resourceCPU = "2000m"
-		resourceMemory = "2Gi"
+		return corev1.ResourceRequirements{
+			Limits: corev1.ResourceList{
+				corev1.ResourceMemory: resource.MustParse(resourceMemoryLimit),
+			},
+			Requests: corev1.ResourceList{
+				corev1.ResourceCPU:    resource.MustParse(resourceCPURequest),
+				corev1.ResourceMemory: resource.MustParse(resourceMemoryRequest),
+			},
+		}
 	}
 
-	return corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse(resourceCPU),
-			corev1.ResourceMemory: resource.MustParse(resourceMemory),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse(resourceCPU),
-			corev1.ResourceMemory: resource.MustParse(resourceMemory),
-		},
-	}
+	return config.Config.Flavours[flavour]
 }
 
 func ExtractGitHubScopeDetails(gitRepoURL string) (GitHubScopeDetails, error) {
