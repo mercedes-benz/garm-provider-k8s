@@ -114,6 +114,15 @@ runnerNamespace: "this_is_An_invalid_namespace_name"
 							corev1.ResourceMemory: resource.MustParse("50Mi"),
 						},
 					},
+					"large": {
+						Limits: corev1.ResourceList{
+							corev1.ResourceMemory: resource.MustParse("1Gi"),
+						},
+						Requests: corev1.ResourceList{
+							corev1.ResourceCPU:    resource.MustParse("1000m"),
+							corev1.ResourceMemory: resource.MustParse("500Mi"),
+						},
+					},
 				},
 			},
 			config: `
@@ -127,6 +136,12 @@ flavours:
       memory: 50Mi
     limits:
       memory: 200Mi
+  large:
+    requests:
+      cpu: 1000m
+      memory: 500Mi
+    limits:
+      memory: 1Gi
 `,
 			wantError: false,
 		},

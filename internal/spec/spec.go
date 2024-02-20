@@ -11,7 +11,6 @@ import (
 
 	"github.com/cloudbase/garm-provider-common/params"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/mercedes-benz/garm-provider-k8s/pkg/config"
@@ -110,19 +109,7 @@ func ParamsToPodLabels(controllerID string, bootstrapParams params.BootstrapInst
 
 func FlavourToResourceRequirements(flavour string) corev1.ResourceRequirements {
 	if _, ok := config.Config.Flavours[flavour]; !ok {
-		resourceCPURequest := "100m"
-		resourceMemoryRequest := "100Mi"
-		resourceMemoryLimit := "200Mi"
-
-		return corev1.ResourceRequirements{
-			Limits: corev1.ResourceList{
-				corev1.ResourceMemory: resource.MustParse(resourceMemoryLimit),
-			},
-			Requests: corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse(resourceCPURequest),
-				corev1.ResourceMemory: resource.MustParse(resourceMemoryRequest),
-			},
-		}
+		return corev1.ResourceRequirements{}
 	}
 
 	return config.Config.Flavours[flavour]

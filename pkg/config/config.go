@@ -38,7 +38,8 @@ func NewConfig(configPath string) error {
 		return err
 	}
 
-	// clear out flavours & podTemplate key so koanf does not try to unmarshal them later
+	// clear out flavours & podTemplate key so koanf does not try to unmarshal them later,
+	// as koanf has trouble unmarshalling yaml into a corev1.ResourceRequirements struct
 	Config.Flavours = unmarshalFlavours(k)
 	k.Delete("flavours")
 

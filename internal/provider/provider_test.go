@@ -586,15 +586,7 @@ func TestCreateInstance(t *testing.T) {
 								},
 							},
 							ImagePullPolicy: corev1.PullAlways,
-							Resources: corev1.ResourceRequirements{
-								Limits: corev1.ResourceList{
-									corev1.ResourceMemory: resource.MustParse("200Mi"),
-								},
-								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("100m"),
-									corev1.ResourceMemory: resource.MustParse("100Mi"),
-								},
-							},
+							Resources:       corev1.ResourceRequirements{},
 						},
 					},
 				},
@@ -757,15 +749,7 @@ func TestCreateInstance(t *testing.T) {
 								},
 							},
 							ImagePullPolicy: "Always",
-							Resources: corev1.ResourceRequirements{
-								Limits: corev1.ResourceList{
-									corev1.ResourceMemory: resource.MustParse("200Mi"),
-								},
-								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("100m"),
-									corev1.ResourceMemory: resource.MustParse("100Mi"),
-								},
-							},
+							Resources:       corev1.ResourceRequirements{},
 							LivenessProbe: &corev1.Probe{
 								ProbeHandler: corev1.ProbeHandler{
 									Exec: &corev1.ExecAction{
@@ -968,7 +952,7 @@ func TestCreateInstance(t *testing.T) {
 									corev1.ResourceMemory: resource.MustParse("1Gi"),
 								},
 								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("1000m"),
+									corev1.ResourceCPU:    resource.MustParse("1"),
 									corev1.ResourceMemory: resource.MustParse("500Mi"),
 								},
 							},

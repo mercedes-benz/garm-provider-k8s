@@ -103,7 +103,7 @@ func (p Provider) ensureNamespace(runnerNamespace string) error {
 		return err
 	}
 
-	// if namespace doesn't exists
+	// if namespace doesn't exist
 	// there is no need for creating again
 	if apierrors.IsNotFound(err) {
 		_, err = p.ClientSet.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
