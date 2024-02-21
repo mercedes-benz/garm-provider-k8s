@@ -11,14 +11,15 @@ import (
 
 	"github.com/cloudbase/garm-provider-common/params"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/json"
+
+	"github.com/mercedes-benz/garm-provider-k8s/pkg/config"
 )
 
 const (
 	GarmInstanceNameLabel = "garm/instance-name"
 	GarmControllerIDLabel = "garm/controllerID"
-	GarmFlavourLabel      = "garm/flavour"
+	GarmFlavorLabel       = "garm/flavor"
 	GarmOSTypeLabel       = "garm/os_type"
 	GarmOSArchLabel       = "garm/os_arch"
 	GarmOSNameLabel       = "garm/os_name"
@@ -33,14 +34,6 @@ type GitHubScopeDetails struct {
 	Org        string
 	Enterprise string
 }
-
-type Flavour string
-
-const (
-	Small  Flavour = "small"
-	Medium Flavour = "medium"
-	Large  Flavour = "large"
-)
 
 type (
 	OSType    string
@@ -106,7 +99,7 @@ func ParamsToPodLabels(controllerID string, bootstrapParams params.BootstrapInst
 	labels[GarmInstanceNameLabel] = ToValidLabel(bootstrapParams.Name)
 	labels[GarmControllerIDLabel] = ToValidLabel(controllerID)
 	labels[GarmPoolIDLabel] = ToValidLabel(bootstrapParams.PoolID)
-	labels[GarmFlavourLabel] = ToValidLabel(bootstrapParams.Flavor)
+	labels[GarmFlavorLabel] = ToValidLabel(bootstrapParams.Flavor)
 	labels[GarmOSTypeLabel] = ToValidLabel(string(bootstrapParams.OSType))
 	labels[GarmOSArchLabel] = ToValidLabel(string(bootstrapParams.OSArch))
 	labels[GarmRunnerGroupLabel] = ToValidLabel(bootstrapParams.GitHubRunnerGroup)
@@ -114,29 +107,12 @@ func ParamsToPodLabels(controllerID string, bootstrapParams params.BootstrapInst
 	return labels
 }
 
-func FlavourToResourceRequirements(flavour Flavour) corev1.ResourceRequirements {
-	resourceCPU := "500m"
-	resourceMemory := "500Mi"
-
-	switch flavour {
-	case Medium:
-		resourceCPU = "1000m"
-		resourceMemory = "1Gi"
-	case Large:
-		resourceCPU = "2000m"
-		resourceMemory = "2Gi"
+func FlavorToResourceRequirements(flavor string) corev1.ResourceRequirements {
+	if _, ok := config.Config.Flavors[flavor]; !ok {
+		return corev1.ResourceRequirements{}
 	}
 
-	return corev1.ResourceRequirements{
-		Limits: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse(resourceCPU),
-			corev1.ResourceMemory: resource.MustParse(resourceMemory),
-		},
-		Requests: corev1.ResourceList{
-			corev1.ResourceCPU:    resource.MustParse(resourceCPU),
-			corev1.ResourceMemory: resource.MustParse(resourceMemory),
-		},
-	}
+	return config.Config.Flavors[flavor]
 }
 
 func ExtractGitHubScopeDetails(gitRepoURL string) (GitHubScopeDetails, error) {
