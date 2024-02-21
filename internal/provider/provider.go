@@ -32,7 +32,7 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 	podName := strings.ToLower(bootstrapParams.Name)
 	labels := spec.ParamsToPodLabels(p.ControllerID, bootstrapParams)
 	fullImageName := spec.GetFullImagePath(config.Config.ContainerRegistry, bootstrapParams.Image)
-	resourceRequirements := spec.FlavourToResourceRequirements(bootstrapParams.Flavor)
+	resourceRequirements := spec.FlavorToResourceRequirements(bootstrapParams.Flavor)
 
 	gitHubScopeDetails, err := spec.ExtractGitHubScopeDetails(bootstrapParams.RepoURL)
 	if err != nil {

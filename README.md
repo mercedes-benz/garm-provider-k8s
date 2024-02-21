@@ -68,7 +68,7 @@ podTemplate: # pod template to use for the runner pods / helpful to add sidecar 
     volumes:
       - name: my-additional-volume
         emptyDir: {}
-flavours: # configure different flavours which will be set as `ResourceRequirements` at runner container and can be targeted from a pool via its `flavour` property
+flavors: # configure different flavors which will be set as `ResourceRequirements` at runner container and can be targeted from a pool via its `flavor` property
   micro:
     requests:
       cpu: 50m

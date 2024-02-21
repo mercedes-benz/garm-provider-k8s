@@ -124,7 +124,7 @@ func TestCreateInstance(t *testing.T) {
 					Namespace: "runner",
 					Labels: map[string]string{
 						spec.GarmInstanceNameLabel: instanceName,
-						spec.GarmFlavourLabel:      "small",
+						spec.GarmFlavorLabel:       "small",
 						spec.GarmOSArchLabel:       "arm64",
 						spec.GarmOSTypeLabel:       "linux",
 						spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",
@@ -329,7 +329,7 @@ func TestCreateInstance(t *testing.T) {
 					Namespace: "runner",
 					Labels: map[string]string{
 						spec.GarmInstanceNameLabel: instanceName,
-						spec.GarmFlavourLabel:      "small",
+						spec.GarmFlavorLabel:       "small",
 						spec.GarmOSArchLabel:       "arm64",
 						spec.GarmOSTypeLabel:       "linux",
 						spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",
@@ -495,7 +495,7 @@ func TestCreateInstance(t *testing.T) {
 					Namespace: "runner",
 					Labels: map[string]string{
 						spec.GarmInstanceNameLabel: instanceName,
-						spec.GarmFlavourLabel:      "small",
+						spec.GarmFlavorLabel:       "small",
 						spec.GarmOSArchLabel:       "arm64",
 						spec.GarmOSTypeLabel:       "linux",
 						spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",
@@ -658,7 +658,7 @@ func TestCreateInstance(t *testing.T) {
 					Namespace: "runner",
 					Labels: map[string]string{
 						spec.GarmInstanceNameLabel: instanceName,
-						spec.GarmFlavourLabel:      "small",
+						spec.GarmFlavorLabel:       "small",
 						spec.GarmOSArchLabel:       "arm64",
 						spec.GarmOSTypeLabel:       "linux",
 						spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",
@@ -773,7 +773,7 @@ func TestCreateInstance(t *testing.T) {
 			err:            nil,
 		},
 		{
-			name: "Valid bootstrapParams and custom flavours",
+			name: "Valid bootstrapParams and custom flavors",
 			config: &config.ProviderConfig{
 				KubeConfigPath:    "",
 				ContainerRegistry: "localhost:5000",
@@ -802,7 +802,7 @@ func TestCreateInstance(t *testing.T) {
 						},
 					},
 				},
-				Flavours: map[string]corev1.ResourceRequirements{
+				Flavors: map[string]corev1.ResourceRequirements{
 					"tiny": {
 						Limits: corev1.ResourceList{
 							corev1.ResourceMemory: resource.MustParse("200Mi"),
@@ -856,7 +856,7 @@ func TestCreateInstance(t *testing.T) {
 					Namespace: "runner",
 					Labels: map[string]string{
 						spec.GarmInstanceNameLabel: instanceName,
-						spec.GarmFlavourLabel:      "ultra",
+						spec.GarmFlavorLabel:       "ultra",
 						spec.GarmOSArchLabel:       "arm64",
 						spec.GarmOSTypeLabel:       "linux",
 						spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",
@@ -1043,7 +1043,7 @@ func TestGetInstance(t *testing.T) {
 						Namespace: "runner",
 						Labels: map[string]string{
 							spec.GarmInstanceNameLabel: instanceName,
-							spec.GarmFlavourLabel:      "small",
+							spec.GarmFlavorLabel:       "small",
 							spec.GarmOSArchLabel:       "arm64",
 							spec.GarmOSTypeLabel:       "linux",
 							spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",
@@ -1191,7 +1191,7 @@ func TestDeleteInstance(t *testing.T) {
 						Namespace: "runner",
 						Labels: map[string]string{
 							spec.GarmInstanceNameLabel: instanceName,
-							spec.GarmFlavourLabel:      "small",
+							spec.GarmFlavorLabel:       "small",
 							spec.GarmOSArchLabel:       "arm64",
 							spec.GarmOSTypeLabel:       "linux",
 							spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",
@@ -1368,7 +1368,7 @@ func TestRemoveAllInstances(t *testing.T) {
 						Namespace: "runner",
 						Labels: map[string]string{
 							spec.GarmInstanceNameLabel: instanceName,
-							spec.GarmFlavourLabel:      "small",
+							spec.GarmFlavorLabel:       "small",
 							spec.GarmOSArchLabel:       "arm64",
 							spec.GarmOSTypeLabel:       "linux",
 							spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",
@@ -1481,7 +1481,7 @@ func TestRemoveAllInstances(t *testing.T) {
 						Namespace: "runner",
 						Labels: map[string]string{
 							spec.GarmInstanceNameLabel: instanceName,
-							spec.GarmFlavourLabel:      "small",
+							spec.GarmFlavorLabel:       "small",
 							spec.GarmOSArchLabel:       "arm64",
 							spec.GarmOSTypeLabel:       "linux",
 							spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",

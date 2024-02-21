@@ -19,7 +19,7 @@ import (
 const (
 	GarmInstanceNameLabel = "garm/instance-name"
 	GarmControllerIDLabel = "garm/controllerID"
-	GarmFlavourLabel      = "garm/flavour"
+	GarmFlavorLabel       = "garm/flavor"
 	GarmOSTypeLabel       = "garm/os_type"
 	GarmOSArchLabel       = "garm/os_arch"
 	GarmOSNameLabel       = "garm/os_name"
@@ -99,7 +99,7 @@ func ParamsToPodLabels(controllerID string, bootstrapParams params.BootstrapInst
 	labels[GarmInstanceNameLabel] = ToValidLabel(bootstrapParams.Name)
 	labels[GarmControllerIDLabel] = ToValidLabel(controllerID)
 	labels[GarmPoolIDLabel] = ToValidLabel(bootstrapParams.PoolID)
-	labels[GarmFlavourLabel] = ToValidLabel(bootstrapParams.Flavor)
+	labels[GarmFlavorLabel] = ToValidLabel(bootstrapParams.Flavor)
 	labels[GarmOSTypeLabel] = ToValidLabel(string(bootstrapParams.OSType))
 	labels[GarmOSArchLabel] = ToValidLabel(string(bootstrapParams.OSArch))
 	labels[GarmRunnerGroupLabel] = ToValidLabel(bootstrapParams.GitHubRunnerGroup)
@@ -107,12 +107,12 @@ func ParamsToPodLabels(controllerID string, bootstrapParams params.BootstrapInst
 	return labels
 }
 
-func FlavourToResourceRequirements(flavour string) corev1.ResourceRequirements {
-	if _, ok := config.Config.Flavours[flavour]; !ok {
+func FlavorToResourceRequirements(flavor string) corev1.ResourceRequirements {
+	if _, ok := config.Config.Flavors[flavor]; !ok {
 		return corev1.ResourceRequirements{}
 	}
 
-	return config.Config.Flavours[flavour]
+	return config.Config.Flavors[flavor]
 }
 
 func ExtractGitHubScopeDetails(gitRepoURL string) (GitHubScopeDetails, error) {

@@ -21,7 +21,7 @@ type ProviderConfig struct {
 	ContainerRegistry string                                 `koanf:"containerRegistry"`
 	RunnerNamespace   string                                 `koanf:"runnerNamespace"`
 	PodTemplate       corev1.PodTemplateSpec                 `koanf:"podTemplate"`
-	Flavours          map[string]corev1.ResourceRequirements `koanf:"flavours"`
+	Flavors           map[string]corev1.ResourceRequirements `koanf:"flavors"`
 }
 
 var Config ProviderConfig
@@ -38,10 +38,10 @@ func NewConfig(configPath string) error {
 		return err
 	}
 
-	// clear out flavours & podTemplate key so koanf does not try to unmarshal them later,
+	// clear out flavors & podTemplate key so koanf does not try to unmarshal them later,
 	// as koanf has trouble unmarshalling yaml into a corev1.ResourceRequirements struct
-	Config.Flavours = unmarshalFlavours(k)
-	k.Delete("flavours")
+	Config.Flavors = unmarshalFlavors(k)
+	k.Delete("flavors")
 
 	Config.PodTemplate = unmarshalPodTemplateSpec(k)
 	k.Delete("podTemplate")
@@ -130,22 +130,22 @@ func unmarshalPodTemplateSpec(k *koanf.Koanf) corev1.PodTemplateSpec {
 	return podTemplate
 }
 
-func unmarshalFlavours(k *koanf.Koanf) map[string]corev1.ResourceRequirements {
+func unmarshalFlavors(k *koanf.Koanf) map[string]corev1.ResourceRequirements {
 	var result map[string]corev1.ResourceRequirements
 
 	// Extract the podTemplate as a raw map
-	flavoursMap := k.Get("flavours")
-	if flavoursMap == nil {
+	flavorsMap := k.Get("flavors")
+	if flavorsMap == nil {
 		return result
 	}
 
 	// Convert the map to a YAML string
-	flavoursYAML, err := yaml.Marshal(flavoursMap)
+	flavorsYAML, err := yaml.Marshal(flavorsMap)
 	if err != nil {
 		return result
 	}
 
-	decoder := k8sYaml.NewYAMLOrJSONDecoder(bytes.NewReader(flavoursYAML), len(flavoursYAML))
+	decoder := k8sYaml.NewYAMLOrJSONDecoder(bytes.NewReader(flavorsYAML), len(flavorsYAML))
 	if err := decoder.Decode(&result); err != nil {
 		return result
 	}

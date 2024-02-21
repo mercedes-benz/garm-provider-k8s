@@ -94,7 +94,7 @@ runnerNamespace: "this_is_An_invalid_namespace_name"
 			wantError: true,
 		},
 		{
-			name: "valid configuration with custom flavour to resource requirements mapping",
+			name: "valid configuration with custom flavor to resource requirements mapping",
 			expected: config.ProviderConfig{
 				KubeConfigPath:    "/path/to/kubeconfig",
 				ContainerRegistry: "",
@@ -104,7 +104,7 @@ runnerNamespace: "this_is_An_invalid_namespace_name"
 						Containers: []corev1.Container{},
 					},
 				},
-				Flavours: map[string]corev1.ResourceRequirements{
+				Flavors: map[string]corev1.ResourceRequirements{
 					"micro": {
 						Limits: corev1.ResourceList{
 							corev1.ResourceMemory: resource.MustParse("200Mi"),
@@ -129,7 +129,7 @@ runnerNamespace: "this_is_An_invalid_namespace_name"
 kubeConfigPath: "/path/to/kubeconfig"
 containerRegistry: ""
 runnerNamespace: "runner"
-flavours:
+flavors:
   micro:
     requests:
       cpu: 50m
@@ -216,7 +216,7 @@ podTemplate:
 				assert.Equal(t, tc.expected.ContainerRegistry, config.Config.ContainerRegistry)
 				assert.Equal(t, tc.expected.RunnerNamespace, config.Config.RunnerNamespace)
 				assert.Equal(t, tc.expected.PodTemplate, config.Config.PodTemplate)
-				assert.Equal(t, tc.expected.Flavours, config.Config.Flavours)
+				assert.Equal(t, tc.expected.Flavors, config.Config.Flavors)
 			}
 
 			// empty the global config for the next run
