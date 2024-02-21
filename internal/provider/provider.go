@@ -32,7 +32,7 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 	podName := strings.ToLower(bootstrapParams.Name)
 	labels := spec.ParamsToPodLabels(p.ControllerID, bootstrapParams)
 	fullImageName := spec.GetFullImagePath(config.Config.ContainerRegistry, bootstrapParams.Image)
-	resourceRequirements := spec.FlavourToResourceRequirements(spec.Flavour(bootstrapParams.Flavor))
+	resourceRequirements := spec.FlavorToResourceRequirements(bootstrapParams.Flavor)
 
 	gitHubScopeDetails, err := spec.ExtractGitHubScopeDetails(bootstrapParams.RepoURL)
 	if err != nil {
@@ -103,7 +103,7 @@ func (p Provider) ensureNamespace(runnerNamespace string) error {
 		return err
 	}
 
-	// if namespace doesn't exists
+	// if namespace doesn't exist
 	// there is no need for creating again
 	if apierrors.IsNotFound(err) {
 		_, err = p.ClientSet.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
