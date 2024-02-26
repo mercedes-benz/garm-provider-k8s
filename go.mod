@@ -6,7 +6,7 @@ go 1.21.5
 
 require (
 	github.com/cloudbase/garm-provider-common v0.1.1
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/file v0.1.0
 	github.com/knadh/koanf/v2 v2.0.1
@@ -15,7 +15,7 @@ require (
 	k8s.io/apimachinery v0.28.2
 	k8s.io/client-go v0.28.2
 	sigs.k8s.io/controller-runtime v0.16.2
-	sigs.k8s.io/yaml v1.3.0
+	sigs.k8s.io/yaml v1.4.0
 )
 
 require (
