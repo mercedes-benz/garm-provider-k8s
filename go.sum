@@ -1,5 +1,5 @@
-github.com/cloudbase/garm-provider-common v0.1.0 h1:gc2n8nsLjt7G3InAfqZ+75iZjSIUkIx86d6/DFA2+jc=
-github.com/cloudbase/garm-provider-common v0.1.0/go.mod h1:igxJRT3OlykERYc6ssdRQXcb+BCaeSfnucg6I0OSoDc=
+github.com/cloudbase/garm-provider-common v0.1.1 h1:9SbkEevpycI/P3J7jEmjJf6VzdrxAIHkLppnjqaKAWU=
+github.com/cloudbase/garm-provider-common v0.1.1/go.mod h1:igxJRT3OlykERYc6ssdRQXcb+BCaeSfnucg6I0OSoDc=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

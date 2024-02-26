@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 
 module.exports = {
+    extends: ['@commitlint/config-conventional'],
+    ignores: [(message) => /^Bumps \[.+]\(.+\) from .+ to .+\.$/m.test(message)], // ignore dependabot commits
     parserPreset: 'conventional-changelog-conventionalcommits',
     rules: {
         'body-leading-blank': [1, 'always'],
