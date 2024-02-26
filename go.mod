@@ -6,7 +6,7 @@ go 1.21.5
 
 require (
 	github.com/cloudbase/garm-provider-common v0.1.0
-	github.com/google/uuid v1.3.1
+	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/yaml v0.1.0
 	github.com/knadh/koanf/providers/file v0.1.0
 	github.com/knadh/koanf/v2 v2.0.1
