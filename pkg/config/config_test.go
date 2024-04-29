@@ -24,9 +24,8 @@ func TestGetConfig(t *testing.T) {
 		{
 			name: "valid configuration withouth PodTemplateSpec",
 			expected: config.ProviderConfig{
-				KubeConfigPath:    "/path/to/kubeconfig",
-				ContainerRegistry: "sample.registry.com",
-				RunnerNamespace:   "test-namespace",
+				KubeConfigPath:  "/path/to/kubeconfig",
+				RunnerNamespace: "test-namespace",
 				PodTemplate: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{},
@@ -35,16 +34,14 @@ func TestGetConfig(t *testing.T) {
 			},
 			config: `
 kubeConfigPath: "/path/to/kubeconfig"
-containerRegistry: "sample.registry.com"
 runnerNamespace: "test-namespace"
 `,
 		},
 		{
 			name: "valid configuration - expect default namespace",
 			expected: config.ProviderConfig{
-				KubeConfigPath:    "/path/to/kubeconfig",
-				ContainerRegistry: "sample.registry.com",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "/path/to/kubeconfig",
+				RunnerNamespace: "runner",
 				PodTemplate: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{},
@@ -53,15 +50,13 @@ runnerNamespace: "test-namespace"
 			},
 			config: `
 kubeConfigPath: "/path/to/kubeconfig"
-containerRegistry: "sample.registry.com"
 `,
 		},
 		{
 			name: "valid configuration without a defined registry is fine - using configured container runtime registries",
 			expected: config.ProviderConfig{
-				KubeConfigPath:    "/path/to/kubeconfig",
-				ContainerRegistry: "",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "/path/to/kubeconfig",
+				RunnerNamespace: "runner",
 				PodTemplate: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{},
@@ -70,16 +65,14 @@ containerRegistry: "sample.registry.com"
 			},
 			config: `
 kubeConfigPath: "/path/to/kubeconfig"
-containerRegistry: ""
 runnerNamespace: "runner"
 `,
 		},
 		{
 			name: "invalid configuration with a invalid namespace name",
 			expected: config.ProviderConfig{
-				KubeConfigPath:    "/path/to/kubeconfig",
-				ContainerRegistry: "",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "/path/to/kubeconfig",
+				RunnerNamespace: "runner",
 				PodTemplate: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{},
@@ -88,7 +81,6 @@ runnerNamespace: "runner"
 			},
 			config: `
 kubeConfigPath: "/path/to/kubeconfig"
-containerRegistry: ""
 runnerNamespace: "this_is_An_invalid_namespace_name"
 `,
 			wantError: true,
@@ -96,9 +88,8 @@ runnerNamespace: "this_is_An_invalid_namespace_name"
 		{
 			name: "valid configuration with custom flavor to resource requirements mapping",
 			expected: config.ProviderConfig{
-				KubeConfigPath:    "/path/to/kubeconfig",
-				ContainerRegistry: "",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "/path/to/kubeconfig",
+				RunnerNamespace: "runner",
 				PodTemplate: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{},
@@ -127,7 +118,6 @@ runnerNamespace: "this_is_An_invalid_namespace_name"
 			},
 			config: `
 kubeConfigPath: "/path/to/kubeconfig"
-containerRegistry: ""
 runnerNamespace: "runner"
 flavors:
   micro:
@@ -148,9 +138,8 @@ flavors:
 		{
 			name: "valid configuration with extra livenessProbe",
 			expected: config.ProviderConfig{
-				KubeConfigPath:    "/path/to/kubeconfig",
-				ContainerRegistry: "",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "/path/to/kubeconfig",
+				RunnerNamespace: "runner",
 				PodTemplate: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{
@@ -177,7 +166,6 @@ flavors:
 			},
 			config: `
 kubeConfigPath: "/path/to/kubeconfig"
-containerRegistry: ""
 runnerNamespace: "runner"
 podTemplate:
   spec:
@@ -213,7 +201,6 @@ podTemplate:
 
 			if tc.wantError == false && err == nil {
 				assert.Equal(t, tc.expected.KubeConfigPath, config.Config.KubeConfigPath)
-				assert.Equal(t, tc.expected.ContainerRegistry, config.Config.ContainerRegistry)
 				assert.Equal(t, tc.expected.RunnerNamespace, config.Config.RunnerNamespace)
 				assert.Equal(t, tc.expected.PodTemplate, config.Config.PodTemplate)
 				assert.Equal(t, tc.expected.Flavors, config.Config.Flavors)
