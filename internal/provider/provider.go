@@ -31,7 +31,6 @@ type Provider struct {
 func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.BootstrapInstance) (params.ProviderInstance, error) {
 	podName := strings.ToLower(bootstrapParams.Name)
 	labels := spec.ParamsToPodLabels(p.ControllerID, bootstrapParams)
-	fullImageName := spec.GetFullImagePath(config.Config.ContainerRegistry, bootstrapParams.Image)
 	resourceRequirements := spec.FlavorToResourceRequirements(bootstrapParams.Flavor)
 
 	gitHubScopeDetails, err := spec.ExtractGitHubScopeDetails(bootstrapParams.RepoURL)
@@ -56,7 +55,7 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 			Containers: []corev1.Container{
 				{
 					Name:            "runner",
-					Image:           fullImageName,
+					Image:           bootstrapParams.Image,
 					Resources:       resourceRequirements,
 					Env:             envs,
 					ImagePullPolicy: corev1.PullAlways,

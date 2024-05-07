@@ -5,7 +5,6 @@ package spec
 import (
 	"fmt"
 	"net/url"
-	"path/filepath"
 	"strings"
 	"unicode"
 
@@ -277,9 +276,4 @@ func ExtractImageDetails(pod *corev1.Pod) *ImageDetails {
 		OSVersion: OSVersion(pod.Labels[GarmOSVersionLabel]),
 		OSArch:    OSArch(pod.Labels[GarmOSArchLabel]),
 	}
-}
-
-func GetFullImagePath(containerRegistry, imageNameAndTag string) string {
-	reg := filepath.Clean(containerRegistry)
-	return reg + "/" + imageNameAndTag
 }

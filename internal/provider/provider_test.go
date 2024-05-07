@@ -41,9 +41,8 @@ func TestCreateInstance(t *testing.T) {
 		{
 			name: "Valid bootstrapParams and merge pod template spec",
 			config: &config.ProviderConfig{
-				KubeConfigPath:    "",
-				ContainerRegistry: "localhost:5000",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "",
+				RunnerNamespace: "runner",
 				PodTemplate: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Volumes: []corev1.Volume{
@@ -99,7 +98,7 @@ func TestCreateInstance(t *testing.T) {
 				InstanceToken:    "test-token",
 				MetadataURL:      "https://metadata.test",
 				CallbackURL:      "https://callback.test/status",
-				Image:            "runner:ubuntu-22.04",
+				Image:            "localhost:5000/runner:ubuntu-22.04",
 				OSType:           "linux",
 				OSArch:           "arm64",
 				Labels:           []string{"road-runner", "linux", "arm64", "kubernetes"},
@@ -258,9 +257,8 @@ func TestCreateInstance(t *testing.T) {
 		{
 			name: "Valid bootstrapParams and merge pod template spec with added sidecar",
 			config: &config.ProviderConfig{
-				KubeConfigPath:    "",
-				ContainerRegistry: "localhost:5000",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "",
+				RunnerNamespace: "runner",
 				PodTemplate: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{
@@ -305,7 +303,7 @@ func TestCreateInstance(t *testing.T) {
 				InstanceToken: "test-token",
 				MetadataURL:   "https://metadata.test",
 				CallbackURL:   "https://callback.test/status",
-				Image:         "runner:ubuntu-22.04",
+				Image:         "localhost:5000/runner:ubuntu-22.04",
 				OSType:        "linux",
 				OSArch:        "arm64",
 				Labels:        []string{"road-runner", "linux", "arm64", "kubernetes"},
@@ -454,9 +452,8 @@ func TestCreateInstance(t *testing.T) {
 		{
 			name: "Valid bootstrapParams no pod template spec",
 			config: &config.ProviderConfig{
-				KubeConfigPath:    "",
-				ContainerRegistry: "localhost:5000",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "",
+				RunnerNamespace: "runner",
 				PodTemplate: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{},
@@ -471,7 +468,7 @@ func TestCreateInstance(t *testing.T) {
 				InstanceToken: "test-token",
 				MetadataURL:   "https://metadata.test",
 				CallbackURL:   "https://callback.test/status",
-				Image:         "runner:ubuntu-22.04",
+				Image:         "localhost:5000/runner:ubuntu-22.04",
 				OSType:        "linux",
 				OSArch:        "arm64",
 				Labels:        []string{"road-runner", "linux", "arm64", "kubernetes"},
@@ -597,9 +594,8 @@ func TestCreateInstance(t *testing.T) {
 		{
 			name: "Valid bootstrapParams and merge pod template spec with livenessProbe",
 			config: &config.ProviderConfig{
-				KubeConfigPath:    "",
-				ContainerRegistry: "localhost:5000",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "",
+				RunnerNamespace: "runner",
 				PodTemplate: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{
@@ -633,7 +629,7 @@ func TestCreateInstance(t *testing.T) {
 				InstanceToken:    "test-token",
 				MetadataURL:      "https://metadata.test",
 				CallbackURL:      "https://callback.test/status",
-				Image:            "runner:ubuntu-22.04",
+				Image:            "localhost:5000/runner:ubuntu-22.04",
 				OSType:           "linux",
 				OSArch:           "arm64",
 				Labels:           []string{"road-runner", "linux", "arm64", "kubernetes"},
@@ -775,9 +771,8 @@ func TestCreateInstance(t *testing.T) {
 		{
 			name: "Valid bootstrapParams and custom flavors",
 			config: &config.ProviderConfig{
-				KubeConfigPath:    "",
-				ContainerRegistry: "localhost:5000",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "",
+				RunnerNamespace: "runner",
 				PodTemplate: corev1.PodTemplateSpec{
 					Spec: corev1.PodSpec{
 						Containers: []corev1.Container{
@@ -831,7 +826,7 @@ func TestCreateInstance(t *testing.T) {
 				InstanceToken:    "test-token",
 				MetadataURL:      "https://metadata.test",
 				CallbackURL:      "https://callback.test/status",
-				Image:            "runner:ubuntu-22.04",
+				Image:            "localhost:5000/runner:ubuntu-22.04",
 				OSType:           "linux",
 				OSArch:           "arm64",
 				Labels:           []string{"road-runner", "linux", "arm64", "kubernetes"},
@@ -1019,9 +1014,8 @@ func TestGetInstance(t *testing.T) {
 		{
 			name: "Get Instance",
 			config: &config.ProviderConfig{
-				KubeConfigPath:    "",
-				ContainerRegistry: "localhost:5000",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "",
+				RunnerNamespace: "runner",
 			},
 			expectedProviderInstance: params.ProviderInstance{
 				ProviderID: providerID,
@@ -1176,9 +1170,8 @@ func TestDeleteInstance(t *testing.T) {
 		{
 			name: "Delete Instance Success",
 			config: &config.ProviderConfig{
-				KubeConfigPath:    "",
-				ContainerRegistry: "localhost:5000",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "",
+				RunnerNamespace: "runner",
 			},
 			runtimeObjects: []runtime.Object{
 				&corev1.Pod{
@@ -1353,9 +1346,8 @@ func TestRemoveAllInstances(t *testing.T) {
 		{
 			name: "Remove All Instances Success",
 			config: &config.ProviderConfig{
-				KubeConfigPath:    "",
-				ContainerRegistry: "localhost:5000",
-				RunnerNamespace:   "runner",
+				KubeConfigPath:  "",
+				RunnerNamespace: "runner",
 			},
 			runtimeObjects: []runtime.Object{
 				&corev1.Pod{

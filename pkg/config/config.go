@@ -17,11 +17,10 @@ import (
 )
 
 type ProviderConfig struct {
-	KubeConfigPath    string                                 `koanf:"kubeConfigPath"`
-	ContainerRegistry string                                 `koanf:"containerRegistry"`
-	RunnerNamespace   string                                 `koanf:"runnerNamespace"`
-	PodTemplate       corev1.PodTemplateSpec                 `koanf:"podTemplate"`
-	Flavors           map[string]corev1.ResourceRequirements `koanf:"flavors"`
+	KubeConfigPath  string                                 `koanf:"kubeConfigPath"`
+	RunnerNamespace string                                 `koanf:"runnerNamespace"`
+	PodTemplate     corev1.PodTemplateSpec                 `koanf:"podTemplate"`
+	Flavors         map[string]corev1.ResourceRequirements `koanf:"flavors"`
 }
 
 var Config ProviderConfig
