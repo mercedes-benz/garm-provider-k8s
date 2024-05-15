@@ -49,12 +49,14 @@ GORELEASER ?= $(LOCALBIN)/goreleaser
 MDTOC ?= $(LOCALBIN)/mdtoc
 NANCY ?= $(LOCALBIN)/nancy
 GOVULNCHECK ?= $(LOCALBIN)/govulncheck
+KIND ?= $(LOCALBIN)/kind
 
 ## Tool Versions
 GOLANGCI_LINT_VERSION ?= v1.53.3
 GORELEASER_VERSION ?= v1.21.0
 MDTOC_VERSION ?= v1.1.0
 NANCY_VERSION ?= v1.0.42
+KIND_VERSION ?= v0.22.0
 
 ##@ Build
 .PHONY: all build copy run clean
@@ -119,12 +121,12 @@ prepare-operator: ## Prepare garm-operator for local development
 	envsubst > hack/local-development/kubernetes/garm-operator-all.yaml
 
 .PHONY: kind-cluster
-kind-cluster: ## Create a new kind cluster designed for local development
+kind-cluster: $(KIND) ## Create a new kind cluster designed for local development
 	hack/scripts/kind-with-registry.sh
 
 .PHONY: delete-kind-cluster
 delete-kind-cluster:
-	kind delete cluster --name garm
+	$(KIND) delete cluster --name garm
 	docker kill kind-registry && docker rm kind-registry
 
 .PHONY: tilt-up
@@ -204,6 +206,12 @@ govulncheck: $(GOVULNCHECK) ## Download govulncheck locally if necessary. If wro
 $(GOVULNCHECK): $(LOCALBIN)
 	test -s $(LOCALBIN)/govulncheck || \
 	GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@latest
+
+.PHONY: kind
+kind: $(KIND) ## Download kind locally if necessary. If wrong version is installed, it will be overwritten.
+$(KIND): $(LOCALBIN)
+	test -s $(LOCALBIN)/kind && $(LOCALBIN)/kind version | grep -q $(KIND_VERSION) || \
+	GOBIN=$(LOCALBIN) go install sigs.k8s.io/kind@$(KIND_VERSION)
 
 ##@ Documentation
 .PHONY: generate-doctoc
