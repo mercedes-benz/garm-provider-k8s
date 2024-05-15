@@ -62,7 +62,6 @@ The provider specific config file should look like this:
 ```yaml
 kubeConfigPath: "" # path to a kubernetes config file - if empty the in cluster config will be used
 runnerNamespace: "runner" # namespace to create the runner pods in
-containerRegistry: "localhost:5000" # container registy to pull the runner image from
 podTemplate: # pod template to use for the runner pods / helpful to add sidecar containers
   spec:
     volumes:
