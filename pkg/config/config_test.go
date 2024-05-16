@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/mercedes-benz/garm-provider-k8s/pkg/config"
 )
@@ -179,6 +180,34 @@ podTemplate:
             - test -f /tmp/healthy
         initialDelaySeconds: 5
         periodSeconds: 5
+`,
+			wantError: false,
+		},
+		{
+			name: "valid configuration with additional pod labels",
+			expected: config.ProviderConfig{
+				KubeConfigPath:  "/path/to/kubeconfig",
+				RunnerNamespace: "runner",
+				PodTemplate: corev1.PodTemplateSpec{
+					ObjectMeta: metav1.ObjectMeta{
+						Labels: map[string]string{
+							"foo":  "bar",
+							"foo1": "bar2",
+						},
+					},
+					Spec: corev1.PodSpec{
+						Containers: []corev1.Container{},
+					},
+				},
+			},
+			config: `
+kubeConfigPath: "/path/to/kubeconfig"
+runnerNamespace: "runner"
+podTemplate:
+  metadata:
+    labels:
+      foo: bar
+      foo1: bar2
 `,
 			wantError: false,
 		},
