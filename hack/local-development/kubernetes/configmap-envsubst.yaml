@@ -59,7 +59,6 @@ data:
   garm-provider-k8s-config.yaml: |
     kubeConfigPath: ""
     runnerNamespace: "runner"
-    containerRegistry: "localhost:5000"
     podTemplate:
       spec:
         volumes:

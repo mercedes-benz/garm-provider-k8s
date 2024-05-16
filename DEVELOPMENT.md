@@ -77,7 +77,7 @@ To start developing, you need the following tools installed:
         name: runner-default
         namespace: garm-operator-system
       spec:
-        tag: runner:linux-ubuntu-22.04-x86_64
+        tag: localhost:5000/runner:linux-ubuntu-22.04-x86_64
       ```
 
       **pool:**
