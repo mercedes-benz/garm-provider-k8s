@@ -235,6 +235,14 @@ func GetRunnerEnvs(gitHubScope GitHubScopeDetails, bootstrapParams params.Bootst
 			Value: strings.Join(bootstrapParams.Labels, ","),
 		},
 		{
+			Name:  "RUNNER_NO_DEFAULT_LABELS",
+			Value: "true",
+		},
+		{
+			Name:  "DISABLE_RUNNER_UPDATE",
+			Value: "true",
+		},
+		{
 			Name:  "RUNNER_WORKDIR",
 			Value: "/runner/_work/",
 		},
