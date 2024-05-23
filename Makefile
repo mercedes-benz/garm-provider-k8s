@@ -99,6 +99,11 @@ docker-build-summerwind-runner: ## Build the used runner image
 	docker build -t $(RUNNER_IMAGE) ./runner/summerwind
 	docker push $(RUNNER_IMAGE)
 
+.PHONY: docker-build-upstream-runner
+docker-build-upstream-runner: ## Build the used runner image
+	docker build -t $(RUNNER_IMAGE) ./runner/upstream
+	docker push $(RUNNER_IMAGE)
+
 .PHONY: template
 template: ## Create the necessary configmap for the local development
 ifeq ($(GARM_GITHUB_OAUTH_TOKEN),)

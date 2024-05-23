@@ -4,6 +4,14 @@
 set -ex
 set -o pipefail
 
+RUNNER_ASSETS_DIR=${RUNNER_ASSETS_DIR:-/runnertmp}
+RUNNER_HOME=${RUNNER_HOME:-/runner}
+
+if [ ! -d "${RUNNER_HOME}" ]; then
+  log.error "$RUNNER_HOME should be an emptyDir mount. Please fix the pod spec."
+  exit 1
+fi
+
 if [ -z "$METADATA_URL" ]; then
     echo "no token is available and METADATA_URL is not set"
     exit 1
@@ -50,7 +58,7 @@ function fail() {
 function success() {
     MSG="$1"
     ID=${2:-null}
-    if [ $JIT_CONFIG_ENABLED != "true" ] && [ $ID == "null" ]; then
+    if [ "$JIT_CONFIG_ENABLED" != "true" ] && [ $ID == "null" ]; then
         fail "agent ID is required when JIT_CONFIG_ENABLED is not true"
     fi
 
@@ -65,10 +73,39 @@ function getRunnerFile() {
         "${METADATA_URL}/$1" -o "$2"
 }
 
-pushd /home/runner/
+function check_runner {
+    echo "Checking runner health..."
+    RETRIES=0
+    MAX_RETRIES=15
+
+    while true; do
+        if [[ $RETRIES -eq $MAX_RETRIES ]]; then
+          echo "failed to start runner"
+          fail "failed to start runner"
+        fi
+
+        if [ -f "$RUNNER_HOME"/.runner ]; then
+          AGENT_ID=$(grep "agentId" "$RUNNER_HOME"/.runner |  tr -d -c 0-9)
+          echo "Calling $CALLBACK_URL with $AGENT_ID"
+          systemInfo "$AGENT_ID"
+          success "runner successfully installed" "$AGENT_ID"
+          break
+        fi
+
+        RETRIES=$(expr $RETRIES + 1)
+        echo "RETRIES: $RETRIES"
+        sleep 10
+    done
+}
+
+pushd "$RUNNER_HOME"
+
+shopt -s dotglob
+cp -r "$RUNNER_ASSETS_DIR"/* "$RUNNER_HOME"/
+shopt -u dotglob
 
 sendStatus "configuring runner"
-if [ $JIT_CONFIG_ENABLED == "true" ]; then
+if [ "$JIT_CONFIG_ENABLED" == "true" ]; then
     sendStatus "downloading JIT credentials"
     getRunnerFile "credentials/runner" "/home/runner/.runner" || fail "failed to get runner file"
     getRunnerFile "credentials/credentials" "/home/runner/.credentials" || fail "failed to get credentials file"
@@ -89,33 +126,39 @@ else
 
     REPO_URL="${GITHUB_URL}/${ATTACH}"
 
+    config_args=()
+    if [ "${RUNNER_FEATURE_FLAG_ONCE:-}" != "true" ] && [ "${RUNNER_EPHEMERAL}" == "true" ]; then
+      config_args+=(--ephemeral)
+    fi
+    if [ "${DISABLE_RUNNER_UPDATE:-}" == "true" ]; then
+      config_args+=(--disableupdate)
+    fi
+    if [ "${RUNNER_NO_DEFAULT_LABELS:-}" == "true" ]; then
+      config_args+=(--no-default-labels)
+    fi
+    if [ -n "$RUNNER_GROUP" ] && [ "$RUNNER_GROUP" != "default" ]; then
+        config_args+=(--runnergroup "$RUNNER_GROUP")
+    fi
+
     GITHUB_TOKEN=$(curl --retry 5 --retry-delay 5 --retry-connrefused --fail -s -X GET -H 'Accept: application/json' -H "Authorization: Bearer ${BEARER_TOKEN}" "${METADATA_URL}/runner-registration-token/")
     set +e
     attempt=1
     while true; do
         ERROUT=$(mktemp)
-        if [ ! -z $RUNNER_GROUP ] && [ $RUNNER_GROUP != "default" ]; then
-            ./config.sh --unattended \
-                --url "$REPO_URL" \
-                --token "$GITHUB_TOKEN" \
-                --runnergroup $RUNNER_GROUP \
-                --name "$RUNNER_NAME" \
-                --labels "$RUNNER_LABELS" \
-                --ephemeral 2>$ERROUT
-        else
-            ./config.sh --unattended \
-                --url "$REPO_URL" \
-                --token "$GITHUB_TOKEN" \
-                --name "$RUNNER_NAME" \
-                --labels "$RUNNER_LABELS" \
-                --ephemeral 2>$ERROUT
-        fi
-        if [ $? -eq 0 ]; then
-            rm $ERROUT || true
+
+        if ./config.sh --unattended \
+            --url "$REPO_URL" \
+            --token "$GITHUB_TOKEN" \
+            --name "$RUNNER_NAME" \
+            --labels "$RUNNER_LABELS" \
+            --work "${RUNNER_WORKDIR}" "${config_args[@]}" 2>"$ERROUT"
+        then
+            rm "$ERROUT" || true
             sendStatus "runner successfully configured after $attempt attempt(s)"
             break
         fi
-        LAST_ERR=$(cat $ERROUT)
+
+        LAST_ERR=$(cat "$ERROUT")
         echo "$LAST_ERR"
 
         # if the runner is already configured, remove it and try again. In the past configuring a runner
@@ -123,29 +166,22 @@ else
         ./config.sh remove --token "$GITHUB_TOKEN" || true
 
         if [ $attempt -gt 5 ]; then
-            rm $ERROUT || true
+            rm "$ERROUT" || true
             fail "failed to configure runner: $LAST_ERR"
         fi
 
         sendStatus "failed to configure runner (attempt $attempt): $LAST_ERR (retrying in 5 seconds)"
         attempt=$((attempt + 1))
-        rm $ERROUT || true
+        rm "$ERROUT" || true
         sleep 5
     done
     set -e
 fi
 
-AGENT_ID=""
-
-if [ $JIT_CONFIG_ENABLED != "true" ]; then
+if [ "$JIT_CONFIG_ENABLED" != "true" ]; then
     set +e
-    AGENT_ID=$(grep "agentId" /home/runner/.runner | tr -d -c 0-9)
-    if [ $? -ne 0 ]; then
-        fail "failed to get agent ID"
-    fi
+    check_runner
     set -e
 fi
 
-systemInfo $AGENT_ID || true
-success "runner successfully installed" $AGENT_ID
 ./run.sh "$@"
