@@ -187,6 +187,14 @@ func TestCreateInstance(t *testing.T) {
 									Value: "road-runner,linux,arm64,kubernetes",
 								},
 								{
+									Name:  "RUNNER_NO_DEFAULT_LABELS",
+									Value: "true",
+								},
+								{
+									Name:  "DISABLE_RUNNER_UPDATE",
+									Value: "true",
+								},
+								{
 									Name:  "RUNNER_WORKDIR",
 									Value: "/runner/_work/",
 								},
@@ -382,6 +390,14 @@ func TestCreateInstance(t *testing.T) {
 									Value: "road-runner,linux,arm64,kubernetes",
 								},
 								{
+									Name:  "RUNNER_NO_DEFAULT_LABELS",
+									Value: "true",
+								},
+								{
+									Name:  "DISABLE_RUNNER_UPDATE",
+									Value: "true",
+								},
+								{
 									Name:  "RUNNER_WORKDIR",
 									Value: "/runner/_work/",
 								},
@@ -541,6 +557,14 @@ func TestCreateInstance(t *testing.T) {
 								{
 									Name:  "RUNNER_LABELS",
 									Value: "road-runner,linux,arm64,kubernetes",
+								},
+								{
+									Name:  "RUNNER_NO_DEFAULT_LABELS",
+									Value: "true",
+								},
+								{
+									Name:  "DISABLE_RUNNER_UPDATE",
+									Value: "true",
 								},
 								{
 									Name:  "RUNNER_WORKDIR",
@@ -703,6 +727,14 @@ func TestCreateInstance(t *testing.T) {
 								{
 									Name:  "RUNNER_LABELS",
 									Value: "road-runner,linux,arm64,kubernetes",
+								},
+								{
+									Name:  "RUNNER_NO_DEFAULT_LABELS",
+									Value: "true",
+								},
+								{
+									Name:  "DISABLE_RUNNER_UPDATE",
+									Value: "true",
 								},
 								{
 									Name:  "RUNNER_WORKDIR",
@@ -869,6 +901,14 @@ func TestCreateInstance(t *testing.T) {
 								{
 									Name:  "RUNNER_LABELS",
 									Value: "road-runner,linux,arm64,kubernetes",
+								},
+								{
+									Name:  "RUNNER_NO_DEFAULT_LABELS",
+									Value: "true",
+								},
+								{
+									Name:  "DISABLE_RUNNER_UPDATE",
+									Value: "true",
 								},
 								{
 									Name:  "RUNNER_WORKDIR",
@@ -1051,6 +1091,14 @@ func TestCreateInstance(t *testing.T) {
 								{
 									Name:  "RUNNER_LABELS",
 									Value: "road-runner,linux,arm64,kubernetes",
+								},
+								{
+									Name:  "RUNNER_NO_DEFAULT_LABELS",
+									Value: "true",
+								},
+								{
+									Name:  "DISABLE_RUNNER_UPDATE",
+									Value: "true",
 								},
 								{
 									Name:  "RUNNER_WORKDIR",
@@ -1236,6 +1284,14 @@ func TestGetInstance(t *testing.T) {
 									{
 										Name:  "RUNNER_LABELS",
 										Value: "road-runner,linux,arm64,kubernetes",
+									},
+									{
+										Name:  "RUNNER_NO_DEFAULT_LABELS",
+										Value: "true",
+									},
+									{
+										Name:  "DISABLE_RUNNER_UPDATE",
+										Value: "true",
 									},
 									{
 										Name:  "RUNNER_WORKDIR",
