@@ -2,7 +2,7 @@
 
 module github.com/mercedes-benz/garm-provider-k8s
 
-go 1.21.5
+go 1.22.4
 
 require (
 	github.com/cloudbase/garm-provider-common v0.1.1
