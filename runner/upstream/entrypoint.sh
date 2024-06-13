@@ -4,7 +4,7 @@
 set -ex
 set -o pipefail
 
-RUNNER_ASSETS_DIR=${RUNNER_ASSETS_DIR:-/runnertmp}
+RUNNER_ASSETS_DIR=${RUNNER_ASSETS_DIR:-/home/runner}
 RUNNER_HOME=${RUNNER_HOME:-/runner}
 
 if [ ! -d "${RUNNER_HOME}" ]; then
@@ -84,6 +84,13 @@ function check_runner {
           fail "failed to start runner"
         fi
 
+	AGENT_ID=""
+	if [ "$JIT_CONFIG_ENABLED" == "true" ];then
+	  systemInfo "$AGENT_ID"
+	  success "runner successfully installed" "$AGENT_ID"
+	  break
+	fi
+
         if [ -f "$RUNNER_HOME"/.runner ]; then
           AGENT_ID=$(grep "agentId" "$RUNNER_HOME"/.runner |  tr -d -c 0-9)
           echo "Calling $CALLBACK_URL with $AGENT_ID"
@@ -98,18 +105,18 @@ function check_runner {
     done
 }
 
-pushd "$RUNNER_HOME"
-
 shopt -s dotglob
 cp -r "$RUNNER_ASSETS_DIR"/* "$RUNNER_HOME"/
 shopt -u dotglob
 
+pushd "$RUNNER_HOME"
+
 sendStatus "configuring runner"
 if [ "$JIT_CONFIG_ENABLED" == "true" ]; then
     sendStatus "downloading JIT credentials"
-    getRunnerFile "credentials/runner" "/home/runner/.runner" || fail "failed to get runner file"
-    getRunnerFile "credentials/credentials" "/home/runner/.credentials" || fail "failed to get credentials file"
-    getRunnerFile "credentials/credentials_rsaparams" "/home/runner/.credentials_rsaparams" || fail "failed to get credentials_rsaparams file"
+    getRunnerFile "credentials/runner" "$RUNNER_HOME/.runner" || fail "failed to get runner file"
+    getRunnerFile "credentials/credentials" "$RUNNER_HOME/.credentials" || fail "failed to get credentials file"
+    getRunnerFile "credentials/credentials_rsaparams" "$RUNNER_HOME/.credentials_rsaparams" || fail "failed to get credentials_rsaparams file"
 else
     if [ -n "${RUNNER_ORG}" ] && [ -n "${RUNNER_REPO}" ]; then
         ATTACH="${RUNNER_ORG}/${RUNNER_REPO}"
@@ -178,10 +185,6 @@ else
     set -e
 fi
 
-if [ "$JIT_CONFIG_ENABLED" != "true" ]; then
-    set +e
-    check_runner
-    set -e
-fi
+check_runner &
 
 ./run.sh "$@"
