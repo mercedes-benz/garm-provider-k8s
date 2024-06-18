@@ -16,7 +16,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: garm-operator-system/garm-operator-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: enterprises.garm-operator.mercedes-benz.com
 spec:
   conversion:
@@ -46,13 +46,15 @@ spec:
       jsonPath: .status.id
       name: ID
       type: string
-    - description: Status of the referenced pool
-      jsonPath: .status.poolManagerIsRunning
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: Ready
       type: string
-    - description: Error description
-      jsonPath: .status.poolManagerFailureReason
+    - jsonPath: .status.conditions[?(@.type=='Ready')].message
       name: Error
+      priority: 1
+      type: string
+    - jsonPath: .status.conditions[?(@.reason=='PoolManagerFailure')].message
+      name: Pool_Manager_Failure
       priority: 1
       type: string
     - description: Time duration since creation of Enterprise
@@ -65,14 +67,19 @@ spec:
         description: Enterprise is the Schema for the enterprises API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -103,15 +110,79 @@ spec:
           status:
             description: EnterpriseStatus defines the observed state of Enterprise
             properties:
+              conditions:
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource.\n---\nThis struct is intended for
+                    direct use as an array at the field path .status.conditions.  For
+                    example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
+                    observations of a foo's current state.\n\t    // Known .status.conditions.type
+                    are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
+                    +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
+                    \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
+                    \   // other fields\n\t}"
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        ---
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+                        useful (see .node.status.conditions), the ability to deconflict is important.
+                        The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
               id:
                 type: string
-              poolManagerFailureReason:
-                type: string
-              poolManagerIsRunning:
-                type: boolean
             required:
             - id
-            - poolManagerIsRunning
             type: object
         type: object
     served: true
@@ -124,7 +195,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: garm-operator-system/garm-operator-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: images.garm-operator.mercedes-benz.com
 spec:
   group: garm-operator.mercedes-benz.com
@@ -151,14 +222,19 @@ spec:
         description: Image is the Schema for the images API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -166,9 +242,11 @@ spec:
             description: ImageSpec defines the desired state of Image
             properties:
               tag:
-                description: Tag is the Name of the image in its registry e.g. - in
-                  openstack it can be the image name or id - in k8s it can be the
-                  docker image name + tag
+                description: |-
+                  Tag is the Name of the image in its registry
+                  e.g.
+                  - in openstack it can be the image name or id
+                  - in k8s it can be the docker image name + tag
                 type: string
             type: object
           status:
@@ -184,7 +262,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: garm-operator-system/garm-operator-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: organizations.garm-operator.mercedes-benz.com
 spec:
   conversion:
@@ -214,13 +292,15 @@ spec:
       jsonPath: .status.id
       name: ID
       type: string
-    - description: Status of the referenced pool
-      jsonPath: .status.poolManagerIsRunning
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: Ready
       type: string
-    - description: Error description
-      jsonPath: .status.poolManagerFailureReason
+    - jsonPath: .status.conditions[?(@.type=='Ready')].message
       name: Error
+      priority: 1
+      type: string
+    - jsonPath: .status.conditions[?(@.reason=='PoolManagerFailure')].message
+      name: Pool_Manager_Failure
       priority: 1
       type: string
     - description: Time duration since creation of Organization
@@ -233,14 +313,19 @@ spec:
         description: Organization is the Schema for the organizations API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -271,15 +356,79 @@ spec:
           status:
             description: OrganizationStatus defines the observed state of Organization
             properties:
+              conditions:
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource.\n---\nThis struct is intended for
+                    direct use as an array at the field path .status.conditions.  For
+                    example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
+                    observations of a foo's current state.\n\t    // Known .status.conditions.type
+                    are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
+                    +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
+                    \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
+                    \   // other fields\n\t}"
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        ---
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+                        useful (see .node.status.conditions), the ability to deconflict is important.
+                        The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
               id:
                 type: string
-              poolManagerFailureReason:
-                type: string
-              poolManagerIsRunning:
-                type: boolean
             required:
             - id
-            - poolManagerIsRunning
             type: object
         type: object
     served: true
@@ -292,7 +441,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: garm-operator-system/garm-operator-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: pools.garm-operator.mercedes-benz.com
 spec:
   conversion:
@@ -330,7 +479,7 @@ spec:
       priority: 1
       type: string
     - jsonPath: .spec.flavor
-      name: Flavour
+      name: Flavor
       priority: 1
       type: string
     - jsonPath: .spec.providerName
@@ -345,7 +494,10 @@ spec:
       name: ScopeName
       priority: 1
       type: string
-    - jsonPath: .status.lastSyncError
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
+      name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=='Ready')].message
       name: Error
       priority: 1
       type: string
@@ -362,19 +514,23 @@ spec:
         description: Pool is the Schema for the pools API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
-            description: 'PoolSpec defines the desired state of Pool See: https://github.com/cloudbase/garm/blob/main/params/requests.go#L142'
             properties:
               enabled:
                 type: boolean
@@ -389,10 +545,10 @@ spec:
                   to either an Enterprise, Org or Repo CRD
                 properties:
                   apiGroup:
-                    description: APIGroup is the group for the resource being referenced.
-                      If APIGroup is not specified, the specified Kind must be in
-                      the core API group. For any other third-party types, APIGroup
-                      is required.
+                    description: |-
+                      APIGroup is the group for the resource being referenced.
+                      If APIGroup is not specified, the specified Kind must be in the core API group.
+                      For any other third-party types, APIGroup is required.
                     type: string
                   kind:
                     description: Kind is the type of resource being referenced
@@ -412,6 +568,7 @@ spec:
               maxRunners:
                 type: integer
               minIdleRunners:
+                default: 0
                 type: integer
               osArch:
                 type: string
@@ -440,20 +597,100 @@ spec:
             - runnerBootstrapTimeout
             - tags
             type: object
+            x-kubernetes-validations:
+            - message: minIdleRunners must be less than or equal to maxRunners
+              rule: self.minIdleRunners <= self.maxRunners
           status:
             description: PoolStatus defines the observed state of Pool
             properties:
+              conditions:
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource.\n---\nThis struct is intended for
+                    direct use as an array at the field path .status.conditions.  For
+                    example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
+                    observations of a foo's current state.\n\t    // Known .status.conditions.type
+                    are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
+                    +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
+                    \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
+                    \   // other fields\n\t}"
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        ---
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+                        useful (see .node.status.conditions), the ability to deconflict is important.
+                        The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
               id:
                 type: string
-              lastSyncError:
+              longRunningIdleRunners:
+                type: integer
+              selector:
                 type: string
             required:
             - id
+            - longRunningIdleRunners
+            - selector
             type: object
         type: object
     served: true
     storage: true
     subresources:
+      scale:
+        labelSelectorPath: .status.selector
+        specReplicasPath: .spec.minIdleRunners
+        statusReplicasPath: .status.longRunningIdleRunners
       status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
@@ -461,7 +698,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: garm-operator-system/garm-operator-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: repositories.garm-operator.mercedes-benz.com
 spec:
   conversion:
@@ -491,13 +728,15 @@ spec:
       jsonPath: .status.id
       name: ID
       type: string
-    - description: Status of the referenced pool
-      jsonPath: .status.poolManagerIsRunning
+    - jsonPath: .status.conditions[?(@.type=='Ready')].status
       name: Ready
       type: string
-    - description: Error description
-      jsonPath: .status.poolManagerFailureReason
+    - jsonPath: .status.conditions[?(@.type=='Ready')].message
       name: Error
+      priority: 1
+      type: string
+    - jsonPath: .status.conditions[?(@.reason=='PoolManagerFailure')].message
+      name: Pool_Manager_Failure
       priority: 1
       type: string
     - description: Time duration since creation of Repository
@@ -510,14 +749,19 @@ spec:
         description: Repository is the Schema for the repositories API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -551,15 +795,79 @@ spec:
           status:
             description: RepositoryStatus defines the observed state of Repository
             properties:
+              conditions:
+                items:
+                  description: "Condition contains details for one aspect of the current
+                    state of this API Resource.\n---\nThis struct is intended for
+                    direct use as an array at the field path .status.conditions.  For
+                    example,\n\n\n\ttype FooStatus struct{\n\t    // Represents the
+                    observations of a foo's current state.\n\t    // Known .status.conditions.type
+                    are: \"Available\", \"Progressing\", and \"Degraded\"\n\t    //
+                    +patchMergeKey=type\n\t    // +patchStrategy=merge\n\t    // +listType=map\n\t
+                    \   // +listMapKey=type\n\t    Conditions []metav1.Condition `json:\"conditions,omitempty\"
+                    patchStrategy:\"merge\" patchMergeKey:\"type\" protobuf:\"bytes,1,rep,name=conditions\"`\n\n\n\t
+                    \   // other fields\n\t}"
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: |-
+                        type of condition in CamelCase or in foo.example.com/CamelCase.
+                        ---
+                        Many .condition.type values are consistent across resources like Available, but because arbitrary conditions can be
+                        useful (see .node.status.conditions), the ability to deconflict is important.
+                        The regex it matches is (dns1123SubdomainFmt/)?(qualifiedNameFmt)
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
               id:
                 type: string
-              poolManagerFailureReason:
-                type: string
-              poolManagerIsRunning:
-                type: boolean
             required:
             - id
-            - poolManagerIsRunning
             type: object
         type: object
     served: true
@@ -572,7 +880,7 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     cert-manager.io/inject-ca-from: garm-operator-system/garm-operator-serving-cert
-    controller-gen.kubebuilder.io/version: v0.12.0
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: runners.garm-operator.mercedes-benz.com
 spec:
   group: garm-operator.mercedes-benz.com
@@ -623,14 +931,19 @@ spec:
         description: Runner is the Schema for the runners API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -641,7 +954,8 @@ spec:
             description: RunnerStatus defines the observed state of Runner
             properties:
               addresses:
-                description: Addresses is a list of IP addresses the provider reports
+                description: |-
+                  Addresses is a list of IP addresses the provider reports
                   for this instance.
                 items:
                   properties:
@@ -659,9 +973,9 @@ spec:
                 format: int64
                 type: integer
               githubRunnerGroup:
-                description: GithubRunnerGroup is the github runner group to which
-                  the runner belongs. The runner group must be created by someone
-                  with access to the enterprise.
+                description: |-
+                  GithubRunnerGroup is the github runner group to which the runner belongs.
+                  The runner group must be created by someone with access to the enterprise.
                 type: string
               id:
                 description: ID is the database ID of this instance.
@@ -671,9 +985,11 @@ spec:
                   on GitHub.
                 type: string
               name:
-                description: Name is the name associated with an instance. Depending
-                  on the provider, this may or may not be useful in the context of
-                  the provider, but we can use it internally to identify the instance.
+                description: |-
+                  Name is the name associated with an instance. Depending on
+                  the provider, this may or may not be useful in the context of
+                  the provider, but we can use it internally to identify the
+                  instance.
                 type: string
               osArch:
                 description: OSArch is the operating system architecture.
@@ -682,8 +998,9 @@ spec:
                 description: 'OSName is the name of the OS. Eg: ubuntu, centos, etc.'
                 type: string
               osType:
-                description: OSType is the operating system type. For now, only Linux
-                  and Windows are supported.
+                description: |-
+                  OSType is the operating system type. For now, only Linux and
+                  Windows are supported.
                 type: string
               osVersion:
                 description: OSVersion is the version of the operating system.
@@ -692,14 +1009,15 @@ spec:
                 description: PoolID is the ID of the garm pool to which a runner belongs.
                 type: string
               providerFault:
-                description: ProviderFault holds any error messages captured from
-                  the IaaS provider that is responsible for managing the lifecycle
-                  of the runner.
+                description: |-
+                  ProviderFault holds any error messages captured from the IaaS provider that is
+                  responsible for managing the lifecycle of the runner.
                 type: string
               providerId:
-                description: PeoviderID is the unique ID the provider associated with
-                  the compute instance. We use this to identify the instance in the
-                  provider.
+                description: |-
+                  PeoviderID is the unique ID the provider associated
+                  with the compute instance. We use this to identify the
+                  instance in the provider.
                 type: string
               status:
                 description: 'Status is the status of the instance inside the provider
@@ -981,6 +1299,128 @@ subjects:
   namespace: garm-operator-system
 ---
 apiVersion: v1
+data:
+  config.yaml: "kind: CustomResourceStateMetrics\nspec:\n  resources:\n    ##################\n
+    \   #   ENTERPRISE   #\n    #################\n    - groupVersionKind:\n        group:
+    garm-operator.mercedes-benz.com\n        kind: \"Enterprise\"\n        version:
+    \"v1alpha1\"\n      metricNamePrefix: garm_operator\n      commonLabels:\n        crd_type:
+    \"enterprise\"\n      labelsFromPath:\n        name: [ metadata, name ]\n        namespace:
+    [ metadata, namespace ]\n      metrics:\n        - name: enterprise_created\n
+    \         help: Unix creation timestamp.\n          each:\n            gauge:\n
+    \             path:\n                - metadata\n                - creationTimestamp\n
+    \           type: Gauge\n\n        - name: enterprise_info\n          help: Information
+    about an enterprise.\n          each:\n            type: Info\n            info:\n
+    \             labelsFromPath:\n                credentialsName: [ spec, credentialsName
+    ]\n                webhookSecretRefKey: [ spec, webhookSecretRef, key ]\n                webhookSecretRefName:
+    [ spec, webhookSecretRef, name ]\n                id: [ status, id ]\n        \n
+    \       - name: enterprise_annotation_paused_info\n          help: Whether the
+    enterprise reconciliation is paused.\n          each:\n            type: Info\n
+    \           info:\n              path:\n                - metadata\n                -
+    annotations\n                - garm-operator.mercedes-benz.com/paused\n              labelsFromPath:\n
+    \               paused_value: []\n\n        - name: enterprise_status_conditions\n
+    \         help: Displays whether status of each possible condition is True or
+    False.\n          each:\n            type: Gauge\n            gauge:\n              path:\n
+    \               - status\n                - conditions\n              valueFrom:\n
+    \               - status\n              labelFromKey: reason\n              labelsFromPath:\n
+    \               type: [ type ]\n\n    ##################\n    #   Org         #\n
+    \   #################\n    - groupVersionKind:\n        group: garm-operator.mercedes-benz.com\n
+    \       kind: \"Organization\"\n        version: \"v1alpha1\"\n      metricNamePrefix:
+    garm_operator\n      commonLabels:\n        crd_type: \"organization\"\n      labelsFromPath:\n
+    \       name: [ metadata, name ]\n        namespace: [ metadata, namespace ]\n
+    \     metrics:\n        - name: org_created\n          help: Unix creation timestamp.\n
+    \         each:\n            gauge:\n              path:\n                - metadata\n
+    \               - creationTimestamp\n            type: Gauge\n\n        - name:
+    org_info\n          help: Information about an organization.\n          each:\n
+    \           type: Info\n            info:\n              labelsFromPath:\n                credentialsName:
+    [ spec, credentialsName ]\n                webhookSecretRefKey: [ spec, webhookSecretRef,
+    key ]\n                webhookSecretRefName: [ spec, webhookSecretRef, name ]\n
+    \               id: [ status, id ]\n        \n        - name: org_annotation_paused_info\n
+    \         help: Whether the org reconciliation is paused.\n          each:\n            type:
+    Info\n            info:\n              path:\n                - metadata\n                -
+    annotations\n                - garm-operator.mercedes-benz.com/paused\n              labelsFromPath:\n
+    \               paused_value: [ ]\n\n        - name: org_status_conditions\n          help:
+    Displays whether status of each possible condition is True or False.\n          each:\n
+    \           type: Gauge\n            gauge:\n              path:\n                -
+    status\n                - conditions\n              valueFrom:\n                -
+    status\n              labelFromKey: reason\n              labelsFromPath:\n                type:
+    [ type ]\n\n    ##################\n    #   Repo         #\n    #################\n
+    \   - groupVersionKind:\n        group: garm-operator.mercedes-benz.com\n        kind:
+    \"Repository\"\n        version: \"v1alpha1\"\n      metricNamePrefix: garm_operator\n
+    \     commonLabels:\n        crd_type: \"repository\"\n      labelsFromPath:\n
+    \       name: [ metadata, name ]\n        namespace: [ metadata, namespace ]\n
+    \     metrics:\n        - name: repo_created\n          help: Unix creation timestamp.\n
+    \         each:\n            gauge:\n              path:\n                - metadata\n
+    \               - creationTimestamp\n            type: Gauge\n\n        - name:
+    repo_info\n          help: Information about a repository.\n          each:\n
+    \           type: Info\n            info:\n              labelsFromPath:\n                owner:
+    [ spec, owner ]\n                credentialsName: [ spec, credentialsName ]\n
+    \               webhookSecretRefKey: [ spec, webhookSecretRef, key ]\n                webhookSecretRefName:
+    [ spec, webhookSecretRef, name ]\n                id: [ status, id ]\n        \n
+    \       - name: repo_annotation_paused_info\n          help: Whether the repo
+    reconciliation is paused.\n          each:\n            type: Info\n            info:\n
+    \             path:\n                - metadata\n                - annotations\n
+    \               - garm-operator.mercedes-benz.com/paused\n              labelsFromPath:\n
+    \               paused_value: [ ]\n\n        - name: repo_status_conditions\n
+    \         help: Displays whether status of each possible condition is True or
+    False.\n          each:\n            type: Gauge\n            gauge:\n              path:\n
+    \               - status\n                - conditions\n              valueFrom:\n
+    \               - status\n              labelFromKey: reason\n              labelsFromPath:\n
+    \               type: [ type ]\n\n    ##################\n    #      Pool     #\n
+    \   #################\n    - groupVersionKind:\n        group: garm-operator.mercedes-benz.com\n
+    \       kind: \"Pool\"\n        version: \"v1alpha1\"\n      metricNamePrefix:
+    garm_operator\n      commonLabels:\n        crd_type: \"pool\"\n      labelsFromPath:\n
+    \       name: [ metadata, name ]\n        namespace: [ metadata, namespace ]\n
+    \     metrics:\n        - name: pool_created\n          help: Unix creation timestamp.\n
+    \         each:\n            gauge:\n              path:\n                - metadata\n
+    \               - creationTimestamp\n            type: Gauge\n        \n        -
+    name: pool_info\n          help: Information about a pool.\n          each:\n
+    \           type: Info\n            info:\n              labelsFromPath:\n                githubRunnerGroup:
+    [spec, githubRunnerGroup]\n                scopeKind: [spec, githubScopeRef, kind]\n
+    \               scopeName: [spec, githubScopeRef, name]\n                imageName:
+    [spec, imageName]\n                osArch: [spec, osArch]\n                osType:
+    [spec, osType]\n                providerName: [spec, providerName]\n                runnerBootstrapTimeout:
+    [spec, runnerBootstrapTimeout]\n                runnerPrefix: [spec, runnerPrefix]\n
+    \               tags: [spec, tags]\n                id: [status, id]\n\n        -
+    name: pool_enabled\n          help: Whether the pool is enabled.\n          each:\n
+    \           type: Gauge\n            gauge:\n              nilIsZero: true\n              path:\n
+    \               - spec\n                - enabled\n\n        - name: pool_min_idle_runners\n
+    \         help: Minimum number of idle runners.\n          each:\n            type:
+    Gauge\n            gauge:\n              path:\n                - spec\n                -
+    minIdleRunners\n              \n        - name: pool_max_runners\n          help:
+    Maximum number of runners.\n          each:\n            type: Gauge\n            gauge:\n
+    \             path:\n                - spec\n                - maxRunners\n        \n
+    \       - name: status_long_running_idle_runners\n          help: Number of long
+    running idle runners.\n          each:\n            type: Gauge\n            gauge:\n
+    \             path:\n                - status\n                - longRunningIdleRunners\n
+    \       \n        - name: pool_annotation_paused_info\n          help: Whether
+    the pool reconciliation is paused.\n          each:\n            type: Info\n
+    \           info:\n              path:\n                - metadata\n                -
+    annotations\n                - garm-operator.mercedes-benz.com/paused\n              labelsFromPath:\n
+    \               paused_value: [ ]\n\n        - name: pool_status_conditions\n
+    \         help: Displays whether status of each possible condition is True or
+    False.\n          each:\n            type: Gauge\n            gauge:\n              path:\n
+    \               - status\n                - conditions\n              valueFrom:\n
+    \               - status\n              labelFromKey: reason\n              labelsFromPath:\n
+    \               type: [ type ]\n\n    ##################\n    #      Image    #\n
+    \   #################\n    - groupVersionKind:\n        group: garm-operator.mercedes-benz.com\n
+    \       kind: \"Image\"\n        version: \"v1alpha1\"\n      metricNamePrefix:
+    garm_operator\n      commonLabels:\n        crd_type: \"image\"\n      labelsFromPath:\n
+    \       name: [ metadata, name ]\n        namespace: [ metadata, namespace ]\n
+    \     metrics:\n        - name: image_created\n          help: Unix creation timestamp.\n
+    \         each:\n            gauge:\n              path:\n                - metadata\n
+    \               - creationTimestamp\n            type: Gauge\n        \n        -
+    name: image_info\n          help: Information about an image.\n          each:\n
+    \           type: Info\n            info:\n              labelsFromPath:\n                tag:
+    [spec, tag]\n"
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/name: kube-state-metrics
+  name: garm-operator-kube-state-metrics-config
+  namespace: garm-operator-system
+---
+apiVersion: v1
 kind: Service
 metadata:
   labels:
@@ -1037,7 +1477,7 @@ spec:
         - --operator-watch-namespace=garm-operator-system
         command:
         - /manager
-        image: ghcr.io/mercedes-benz/garm-operator/garm-operator:v0.2.0
+        image: ghcr.io/mercedes-benz/garm-operator/garm-operator:v0.3.2
         livenessProbe:
           httpGet:
             path: /healthz
