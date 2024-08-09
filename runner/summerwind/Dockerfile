@@ -4,10 +4,12 @@ FROM summerwind/actions-runner:ubuntu-22.04
 
 USER root
 
-COPY my-entrypoint.sh /usr/local/bin/
+RUN apt-get update && apt-get install -y curl && apt-get clean
 
-RUN chmod +x /usr/local/bin/my-entrypoint.sh
+COPY entrypoint.sh /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER 1001
 
-ENTRYPOINT ["/usr/local/bin/my-entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
