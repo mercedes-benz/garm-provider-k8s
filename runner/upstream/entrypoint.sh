@@ -74,6 +74,7 @@ function getRunnerFile() {
 }
 
 function check_runner {
+    set +e
     echo "Checking runner health..."
     RETRIES=0
     MAX_RETRIES=15
@@ -84,15 +85,14 @@ function check_runner {
           fail "failed to start runner"
         fi
 
-	AGENT_ID=""
-	if [ "$JIT_CONFIG_ENABLED" == "true" ];then
-	  systemInfo "$AGENT_ID"
-	  success "runner successfully installed" "$AGENT_ID"
-	  break
-	fi
-
+        AGENT_ID=""
         if [ -f "$RUNNER_HOME"/.runner ]; then
-          AGENT_ID=$(grep "agentId" "$RUNNER_HOME"/.runner |  tr -d -c 0-9)
+
+          AGENT_ID=$(grep -io '"[aA]gent[iI]d": [0-9]*' "$RUNNER_HOME"/.runner | sed 's/.*[aA]gent[iI]d": \([0-9]*\).*/\1/')
+          if [ "$JIT_CONFIG_ENABLED" == "true" ];then
+            AGENT_ID=$(grep -ioE '"[aA]gent[iI]d":"?[0-9]+"?' "$RUNNER_HOME"/.runner | sed -E 's/.*[aA]gent[iI]d"?: ?"([0-9]+)".*/\1/')
+          fi
+
           echo "Calling $CALLBACK_URL with $AGENT_ID"
           systemInfo "$AGENT_ID"
           success "runner successfully installed" "$AGENT_ID"
@@ -103,6 +103,7 @@ function check_runner {
         echo "RETRIES: $RETRIES"
         sleep 10
     done
+    set -e
 }
 
 shopt -s dotglob
