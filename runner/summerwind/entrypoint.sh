@@ -74,6 +74,7 @@ function getRunnerFile() {
 }
 
 function check_runner {
+    set +e
     echo "Checking runner health..."
     RETRIES=0
     MAX_RETRIES=15
@@ -84,8 +85,14 @@ function check_runner {
           fail "failed to start runner"
         fi
 
+        AGENT_ID=""
         if [ -f "$RUNNER_HOME"/.runner ]; then
-          AGENT_ID=$(grep "agentId" "$RUNNER_HOME"/.runner |  tr -d -c 0-9)
+
+          AGENT_ID=$(grep -io '"[aA]gent[iI]d": [0-9]*' "$RUNNER_HOME"/.runner | sed 's/.*[aA]gent[iI]d": \([0-9]*\).*/\1/')
+          if [ "$JIT_CONFIG_ENABLED" == "true" ];then
+            AGENT_ID=$(grep -ioE '"[aA]gent[iI]d":"?[0-9]+"?' "$RUNNER_HOME"/.runner | sed -E 's/.*[aA]gent[iI]d"?: ?"([0-9]+)".*/\1/')
+          fi
+
           echo "Calling $CALLBACK_URL with $AGENT_ID"
           systemInfo "$AGENT_ID"
           success "runner successfully installed" "$AGENT_ID"
@@ -96,20 +103,21 @@ function check_runner {
         echo "RETRIES: $RETRIES"
         sleep 10
     done
+    set -e
 }
-
-pushd "$RUNNER_HOME"
 
 shopt -s dotglob
 cp -r "$RUNNER_ASSETS_DIR"/* "$RUNNER_HOME"/
 shopt -u dotglob
 
+pushd "$RUNNER_HOME"
+
 sendStatus "configuring runner"
 if [ "$JIT_CONFIG_ENABLED" == "true" ]; then
     sendStatus "downloading JIT credentials"
-    getRunnerFile "credentials/runner" "/home/runner/.runner" || fail "failed to get runner file"
-    getRunnerFile "credentials/credentials" "/home/runner/.credentials" || fail "failed to get credentials file"
-    getRunnerFile "credentials/credentials_rsaparams" "/home/runner/.credentials_rsaparams" || fail "failed to get credentials_rsaparams file"
+    getRunnerFile "credentials/runner" "$RUNNER_HOME/.runner" || fail "failed to get runner file"
+    getRunnerFile "credentials/credentials" "$RUNNER_HOME/.credentials" || fail "failed to get credentials file"
+    getRunnerFile "credentials/credentials_rsaparams" "$RUNNER_HOME/.credentials_rsaparams" || fail "failed to get credentials_rsaparams file"
 else
     if [ -n "${RUNNER_ORG}" ] && [ -n "${RUNNER_REPO}" ]; then
         ATTACH="${RUNNER_ORG}/${RUNNER_REPO}"
@@ -178,10 +186,6 @@ else
     set -e
 fi
 
-if [ "$JIT_CONFIG_ENABLED" != "true" ]; then
-    set +e
-    check_runner
-    set -e
-fi
+check_runner &
 
 ./run.sh "$@"
