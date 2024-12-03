@@ -18,7 +18,26 @@ To start developing, you need the following tools installed:
 
 ## Getting Started
 
-1. Get yourself a GitHub PAT for development purposes with access to an Organization where the runners will be registered.
+1. Get yourself a GitHub PAT for development purposes with access to a Repository where the runners will be 
+   registered. Your PAT needs the following permissions:
+   If you'll use a PAT (classic), you'll have to grant access for the following scopes. See official [cloudbase/garm](https://github.com/cloudbase/garm/blob/main/doc/github_credentials.md) docs for more information.
+
+   * ```public_repo``` - for access to a repository
+   * ```repo``` - for access to a private repository
+   * ```admin:org``` - if you plan on using this with an organization to which you have access
+   * ```manage_runners:enterprise``` - if you plan to use garm at the enterprise level
+   * ```admin:repo_hook``` - if you want to allow GARM to install webhooks on repositories (optional)
+   * ```admin:org_hook``` - if you want to allow GARM to install webhooks on organizations (optional)
+
+Fine grained PATs are also supported as long as you grant the required privileges:
+
+   * **Repository permissions**:
+     * `Administration: Read & write` - needed to generate JIT config/registration token, remove runners, etc.
+     * `Metadata: Read-only` - automatically enabled by above
+     * `Webhooks: Read & write` - needed to install webhooks on repositories
+  * **Organization permissions**:
+     * `Self-hosted runners: Read & write` - needed to manage runners in an organization
+     * `Webhooks: Read & write` - needed to install webhooks on organizations
 
 1. To spin up GitHub Action Runners with `garm`, the `garm-operator` needs some CRs which can be created by the 
    following command.
@@ -82,4 +101,5 @@ To start developing, you need the following tools installed:
    garm-k8s-vi5mdto8lnav   1/1     Running   0          6m14s
    ```
 
-4. Time to start developing. 🎉
+4. Everytime you now change some code, tilt will automatically build a new container image with the `garm-server` and
+   `garm-provider-k8s` binary and update the image tag in the k8s Deployment manifest. Time to start developing! 🎉
