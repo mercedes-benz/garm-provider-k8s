@@ -106,15 +106,27 @@ docker-build-upstream-runner: ## Build the used runner image
 
 .PHONY: template
 template: ## Create the necessary configmap for the local development
-ifeq ($(GARM_GITHUB_OAUTH_TOKEN),)
-	$(error GARM_GITHUB_OAUTH_TOKEN is undefined)
+ifeq ($(GARM_GITHUB_TOKEN),)
+	$(error GARM_GITHUB_TOKEN is undefined)
 endif
-	GARM_GITHUB_NAME=$(GARM_GITHUB_NAME) \
-	GARM_GITHUB_OAUTH_TOKEN=$(GARM_GITHUB_OAUTH_TOKEN) \
+ifeq ($(GARM_GITHUB_REPOSITORY),)
+	$(error GARM_GITHUB_REPOSITORY is undefined)
+endif
+ifeq ($(GARM_GITHUB_WEBHOOK_SECRET),)
+	$(error GARM_GITHUB_WEBHOOK_SECRET is undefined)
+endif
+ifeq ($(GARM_GITHUB_ORGANIZATION),)
+	$(error GARM_GITHUB_ORGANIZATION is undefined)
+endif
 	GARM_GITHUB_BASE_URL=$(GARM_GITHUB_BASE_URL) \
 	GARM_GITHUB_API_BASE_URL=$(GARM_GITHUB_API_BASE_URL) \
 	GARM_GITHUB_UPLOAD_BASE_URL=$(GARM_GITHUB_UPLOAD_BASE_URL) \
-	envsubst < hack/local-development/kubernetes/configmap-envsubst.yaml > hack/local-development/kubernetes/configmap.yaml
+	GARM_GITHUB_REPOSITORY=$(GARM_GITHUB_REPOSITORY) \
+	GARM_GITHUB_ORGANIZATION=$(GARM_GITHUB_ORGANIZATION) \
+	GARM_GITHUB_TOKEN=$(shell echo -n $(GARM_GITHUB_TOKEN) | base64) \
+	GARM_GITHUB_WEBHOOK_SECRET=$(shell echo -n $(GARM_GITHUB_WEBHOOK_SECRET) | base64) \
+	RUNNER_IMAGE=$(shell echo "localhost:5000/runner:linux-ubuntu-22.04-$(shell uname -m)") \
+	envsubst < hack/local-development/kubernetes/garm-operator-crs-envsubst.yaml > hack/local-development/kubernetes/garm-operator-crs.yaml
 
 .PHONY: prepare-operator
 prepare-operator: ## Prepare garm-operator for local development
