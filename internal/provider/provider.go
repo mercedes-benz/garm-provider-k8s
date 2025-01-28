@@ -22,6 +22,10 @@ import (
 	"github.com/mercedes-benz/garm-provider-k8s/pkg/diff"
 )
 
+const (
+	runnerContainerName = "runner"
+)
+
 type Provider struct {
 	ControllerID  string
 	ClientSet     kubernetes.Interface
@@ -54,7 +58,7 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 			RestartPolicy: corev1.RestartPolicyNever,
 			Containers: []corev1.Container{
 				{
-					Name:            "runner",
+					Name:            runnerContainerName,
 					Image:           bootstrapParams.Image,
 					Resources:       resourceRequirements,
 					Env:             envs,
@@ -70,6 +74,11 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 	}
 
 	err = spec.CreateRunnerVolume(pod)
+	if err != nil {
+		return params.ProviderInstance{}, err
+	}
+
+	err = spec.CreateRunnerVolumeMount(pod, runnerContainerName)
 	if err != nil {
 		return params.ProviderInstance{}, err
 	}

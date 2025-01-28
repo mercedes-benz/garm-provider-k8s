@@ -16,6 +16,11 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// const (
+// 	RunnerVolumeName      = "runner"
+// 	RunnerVolumeMountPath = "/runner"
+// )
+
 type ProviderConfig struct {
 	KubeConfigPath  string                                 `koanf:"kubeConfigPath"`
 	RunnerNamespace string                                 `koanf:"runnerNamespace"`
@@ -60,6 +65,12 @@ func NewConfig(configPath string) error {
 		Config.PodTemplate.Spec.Containers = []corev1.Container{}
 	}
 
+	// // check if volume or volumeMount exists in the pod template
+	// err := validateVolume(RunnerVolumeName, RunnerVolumeMountPath)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to validate volume: %v", err)
+	// }
+
 	// validate the given runner namespace
 	err := validateNamespace(Config.RunnerNamespace)
 	if err != nil {
@@ -88,6 +99,26 @@ func validatePodTemplate() error {
 	}
 	return nil
 }
+
+// // TODO: description
+// func validateVolume(volumeName, volumeMountPath string) error {
+// 	// TODO: Skip volume creation if a volume with the same name already exists in podTemplate
+// 	for _, vol := range Config.PodTemplate.Spec.Volumes {
+// 		if vol.Name == volumeName {
+// 			return fmt.Errorf("volume %s already exists in pod template", vol.Name)
+// 		}
+// 	}
+
+// 	// TODO: description
+// 	for _, containers := range Config.PodTemplate.Spec.Containers {
+// 		for _, volMounts := range containers.VolumeMounts {
+// 			if volMounts.MountPath == volumeMountPath || volMounts.MountPath == strings.TrimSuffix(volumeMountPath, "/") {
+// 				return fmt.Errorf("volume mount %s already exists in pod template", volMounts.MountPath)
+// 			}
+// 		}
+// 	}
+// 	return nil
+// }
 
 // validateNamespace validates the namespace
 // by checking if it is a valid DNS subdomain
