@@ -1172,6 +1172,436 @@ func TestCreateInstance(t *testing.T) {
 			runtimeObjects: []runtime.Object{},
 			err:            nil,
 		},
+		{
+			name: "Overwrite default runner emptyDir volume with a PVC",
+			config: &config.ProviderConfig{
+				KubeConfigPath:  "",
+				RunnerNamespace: "runner",
+				PodTemplate: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: "runner",
+								VolumeSource: corev1.VolumeSource{
+									Ephemeral: &corev1.EphemeralVolumeSource{
+										VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{
+											Spec: corev1.PersistentVolumeClaimSpec{
+												AccessModes: []corev1.PersistentVolumeAccessMode{
+													corev1.ReadWriteOnce,
+												},
+												StorageClassName: toPointer("cinder"),
+												Resources: corev1.VolumeResourceRequirements{
+													Requests: corev1.ResourceList{
+														corev1.ResourceStorage: resource.MustParse("1Gi"),
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						Containers: []corev1.Container{
+							{
+								Name: "runner",
+								Resources: corev1.ResourceRequirements{
+									Limits: corev1.ResourceList{
+										corev1.ResourceCPU:    resource.MustParse("500m"),
+										corev1.ResourceMemory: resource.MustParse("500Mi"),
+									},
+									Requests: corev1.ResourceList{
+										corev1.ResourceCPU:    resource.MustParse("500m"),
+										corev1.ResourceMemory: resource.MustParse("500Mi"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			bootstrapParams: params.BootstrapInstance{
+				Name:             instanceName,
+				PoolID:           poolID,
+				Flavor:           "small",
+				RepoURL:          "https://github.com/testorg",
+				InstanceToken:    "test-token",
+				MetadataURL:      "https://metadata.test",
+				CallbackURL:      "https://callback.test/status",
+				Image:            "localhost:5000/runner:ubuntu-22.04",
+				OSType:           "linux",
+				OSArch:           "arm64",
+				Labels:           []string{"road-runner", "linux", "arm64", "kubernetes"},
+				JitConfigEnabled: true,
+			},
+			expectedProviderInstance: params.ProviderInstance{
+				ProviderID: providerID,
+				Name:       instanceName,
+				OSType:     "linux",
+				OSName:     "",
+				OSVersion:  "",
+				OSArch:     "arm64",
+				Status:     "running",
+			},
+			expectedPodInstance: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      providerID,
+					Namespace: "runner",
+					Labels: map[string]string{
+						spec.GarmInstanceNameLabel: instanceName,
+						spec.GarmFlavorLabel:       "small",
+						spec.GarmOSArchLabel:       "arm64",
+						spec.GarmOSTypeLabel:       "linux",
+						spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",
+						spec.GarmControllerIDLabel: controllerID,
+						spec.GarmRunnerGroupLabel:  "",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Volumes: []corev1.Volume{
+						{
+							Name: "runner",
+							VolumeSource: corev1.VolumeSource{
+								Ephemeral: &corev1.EphemeralVolumeSource{
+									VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{
+										Spec: corev1.PersistentVolumeClaimSpec{
+											AccessModes: []corev1.PersistentVolumeAccessMode{
+												corev1.ReadWriteOnce,
+											},
+											StorageClassName: toPointer("cinder"),
+											Resources: corev1.VolumeResourceRequirements{
+												Requests: corev1.ResourceList{
+													corev1.ResourceStorage: resource.MustParse("1Gi"),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					RestartPolicy: corev1.RestartPolicyNever,
+					Containers: []corev1.Container{
+						{
+							Name:  "runner",
+							Image: "localhost:5000/runner:ubuntu-22.04",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "RUNNER_ORG",
+									Value: "testorg",
+								},
+								{
+									Name:  "RUNNER_REPO",
+									Value: "",
+								},
+								{
+									Name:  "RUNNER_ENTERPRISE",
+									Value: "",
+								},
+								{
+									Name:  "RUNNER_GROUP",
+									Value: "",
+								},
+								{
+									Name:  "RUNNER_NAME",
+									Value: instanceName,
+								},
+								{
+									Name:  "RUNNER_LABELS",
+									Value: "road-runner,linux,arm64,kubernetes",
+								},
+								{
+									Name:  "RUNNER_NO_DEFAULT_LABELS",
+									Value: "true",
+								},
+								{
+									Name:  "DISABLE_RUNNER_UPDATE",
+									Value: "true",
+								},
+								{
+									Name:  "RUNNER_WORKDIR",
+									Value: "/runner/_work/",
+								},
+								{
+									Name:  "GITHUB_URL",
+									Value: "https://github.com",
+								},
+								{
+									Name:  "RUNNER_EPHEMERAL",
+									Value: "true",
+								},
+								{
+									Name:  "RUNNER_TOKEN",
+									Value: "dummy",
+								},
+								{
+									Name:  "METADATA_URL",
+									Value: "https://metadata.test",
+								},
+								{
+									Name:  "BEARER_TOKEN",
+									Value: "test-token",
+								},
+								{
+									Name:  "CALLBACK_URL",
+									Value: "https://callback.test/status",
+								},
+								{
+									Name:  "JIT_CONFIG_ENABLED",
+									Value: "true",
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "runner",
+									ReadOnly:  false,
+									MountPath: "/runner",
+								},
+							},
+							ImagePullPolicy: "Always",
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("500m"),
+									corev1.ResourceMemory: resource.MustParse("500Mi"),
+								},
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("500m"),
+									corev1.ResourceMemory: resource.MustParse("500Mi"),
+								},
+							},
+						},
+					},
+				},
+			},
+			runtimeObjects: []runtime.Object{},
+			err:            nil,
+		},
+		{
+			name: "Use new runner volume and corresponding volumemount with custom name",
+			config: &config.ProviderConfig{
+				KubeConfigPath:  "",
+				RunnerNamespace: "runner",
+				PodTemplate: corev1.PodTemplateSpec{
+					Spec: corev1.PodSpec{
+						Volumes: []corev1.Volume{
+							{
+								Name: "runner-vol",
+								VolumeSource: corev1.VolumeSource{
+									Ephemeral: &corev1.EphemeralVolumeSource{
+										VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{
+											Spec: corev1.PersistentVolumeClaimSpec{
+												AccessModes: []corev1.PersistentVolumeAccessMode{
+													corev1.ReadWriteOnce,
+												},
+												StorageClassName: toPointer("cinder"),
+												Resources: corev1.VolumeResourceRequirements{
+													Requests: corev1.ResourceList{
+														corev1.ResourceStorage: resource.MustParse("1Gi"),
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						Containers: []corev1.Container{
+							{
+								Name: "runner",
+								Resources: corev1.ResourceRequirements{
+									Limits: corev1.ResourceList{
+										corev1.ResourceCPU:    resource.MustParse("500m"),
+										corev1.ResourceMemory: resource.MustParse("500Mi"),
+									},
+									Requests: corev1.ResourceList{
+										corev1.ResourceCPU:    resource.MustParse("500m"),
+										corev1.ResourceMemory: resource.MustParse("500Mi"),
+									},
+								},
+								VolumeMounts: []corev1.VolumeMount{
+									{
+										Name:      "runner-vol",
+										ReadOnly:  false,
+										MountPath: "/runner",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			bootstrapParams: params.BootstrapInstance{
+				Name:             instanceName,
+				PoolID:           poolID,
+				Flavor:           "small",
+				RepoURL:          "https://github.com/testorg",
+				InstanceToken:    "test-token",
+				MetadataURL:      "https://metadata.test",
+				CallbackURL:      "https://callback.test/status",
+				Image:            "localhost:5000/runner:ubuntu-22.04",
+				OSType:           "linux",
+				OSArch:           "arm64",
+				Labels:           []string{"road-runner", "linux", "arm64", "kubernetes"},
+				JitConfigEnabled: true,
+			},
+			expectedProviderInstance: params.ProviderInstance{
+				ProviderID: providerID,
+				Name:       instanceName,
+				OSType:     "linux",
+				OSName:     "",
+				OSVersion:  "",
+				OSArch:     "arm64",
+				Status:     "running",
+			},
+			expectedPodInstance: &corev1.Pod{
+				TypeMeta: metav1.TypeMeta{
+					Kind:       "Pod",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      providerID,
+					Namespace: "runner",
+					Labels: map[string]string{
+						spec.GarmInstanceNameLabel: instanceName,
+						spec.GarmFlavorLabel:       "small",
+						spec.GarmOSArchLabel:       "arm64",
+						spec.GarmOSTypeLabel:       "linux",
+						spec.GarmPoolIDLabel:       "ddce45e7-1bbb-4ecd-92cb-c733372b5cde",
+						spec.GarmControllerIDLabel: controllerID,
+						spec.GarmRunnerGroupLabel:  "",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Volumes: []corev1.Volume{
+						{
+							Name: "runner-vol",
+							VolumeSource: corev1.VolumeSource{
+								Ephemeral: &corev1.EphemeralVolumeSource{
+									VolumeClaimTemplate: &corev1.PersistentVolumeClaimTemplate{
+										Spec: corev1.PersistentVolumeClaimSpec{
+											AccessModes: []corev1.PersistentVolumeAccessMode{
+												corev1.ReadWriteOnce,
+											},
+											StorageClassName: toPointer("cinder"),
+											Resources: corev1.VolumeResourceRequirements{
+												Requests: corev1.ResourceList{
+													corev1.ResourceStorage: resource.MustParse("1Gi"),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						{
+							Name: "runner",
+							VolumeSource: corev1.VolumeSource{
+								EmptyDir: &corev1.EmptyDirVolumeSource{
+									Medium:    "",
+									SizeLimit: nil,
+								},
+							},
+						},
+					},
+					RestartPolicy: corev1.RestartPolicyNever,
+					Containers: []corev1.Container{
+						{
+							Name:  "runner",
+							Image: "localhost:5000/runner:ubuntu-22.04",
+							Env: []corev1.EnvVar{
+								{
+									Name:  "RUNNER_ORG",
+									Value: "testorg",
+								},
+								{
+									Name:  "RUNNER_REPO",
+									Value: "",
+								},
+								{
+									Name:  "RUNNER_ENTERPRISE",
+									Value: "",
+								},
+								{
+									Name:  "RUNNER_GROUP",
+									Value: "",
+								},
+								{
+									Name:  "RUNNER_NAME",
+									Value: instanceName,
+								},
+								{
+									Name:  "RUNNER_LABELS",
+									Value: "road-runner,linux,arm64,kubernetes",
+								},
+								{
+									Name:  "RUNNER_NO_DEFAULT_LABELS",
+									Value: "true",
+								},
+								{
+									Name:  "DISABLE_RUNNER_UPDATE",
+									Value: "true",
+								},
+								{
+									Name:  "RUNNER_WORKDIR",
+									Value: "/runner/_work/",
+								},
+								{
+									Name:  "GITHUB_URL",
+									Value: "https://github.com",
+								},
+								{
+									Name:  "RUNNER_EPHEMERAL",
+									Value: "true",
+								},
+								{
+									Name:  "RUNNER_TOKEN",
+									Value: "dummy",
+								},
+								{
+									Name:  "METADATA_URL",
+									Value: "https://metadata.test",
+								},
+								{
+									Name:  "BEARER_TOKEN",
+									Value: "test-token",
+								},
+								{
+									Name:  "CALLBACK_URL",
+									Value: "https://callback.test/status",
+								},
+								{
+									Name:  "JIT_CONFIG_ENABLED",
+									Value: "true",
+								},
+							},
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "runner-vol",
+									ReadOnly:  false,
+									MountPath: "/runner",
+								},
+							},
+							ImagePullPolicy: "Always",
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("500m"),
+									corev1.ResourceMemory: resource.MustParse("500Mi"),
+								},
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    resource.MustParse("500m"),
+									corev1.ResourceMemory: resource.MustParse("500Mi"),
+								},
+							},
+						},
+					},
+				},
+			},
+			runtimeObjects: []runtime.Object{},
+			err:            nil,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -1826,4 +2256,8 @@ func TestRemoveAllInstances(t *testing.T) {
 			}
 		})
 	}
+}
+
+func toPointer(str string) *string {
+	return &str
 }
