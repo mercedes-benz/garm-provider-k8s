@@ -5,6 +5,7 @@ package spec
 import (
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"strings"
 	"unicode"
 
@@ -13,6 +14,12 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/mercedes-benz/garm-provider-k8s/pkg/config"
+)
+
+var (
+	runnerVolumeName      = "runner"
+	runnerVolumeMountPath = "/runner"
+	runnerVolumeEmptyDir  = &corev1.EmptyDirVolumeSource{}
 )
 
 const (
@@ -181,15 +188,16 @@ func ToValidLabel(input string) string {
 }
 
 func CreateRunnerVolume(pod *corev1.Pod) error {
-	runnerVolumeName := "runner"
-	runnerVolumeMountPath := "/runner"
-	runnerVolumeEmptyDir := &corev1.EmptyDirVolumeSource{}
-
 	if len(pod.Spec.Containers) < 1 {
 		return fmt.Errorf("pod %s has no runner container spec", pod.Name)
 	}
 
-	runnerContainer := &pod.Spec.Containers[0]
+	// Skip volume creation if a volume with the default name already exists in podTemplate
+	for _, vol := range config.Config.PodTemplate.Spec.Volumes {
+		if vol.Name == runnerVolumeName {
+			return nil
+		}
+	}
 
 	volume := corev1.Volume{
 		Name: runnerVolumeName,
@@ -197,14 +205,39 @@ func CreateRunnerVolume(pod *corev1.Pod) error {
 			EmptyDir: runnerVolumeEmptyDir,
 		},
 	}
+
 	pod.Spec.Volumes = append(pod.Spec.Volumes, volume)
+
+	return nil
+}
+
+func CreateRunnerVolumeMount(pod *corev1.Pod, runnerContainerName string) error {
+	if len(pod.Spec.Containers) < 1 {
+		return fmt.Errorf("pod %s has no runner container spec", pod.Name)
+	}
+
+	// Skip volumemount creation if a volumemount with the same path already exists
+	// in podTemplate for the default container
+	for _, container := range config.Config.PodTemplate.Spec.Containers {
+		if container.Name == runnerContainerName {
+			for _, volMounts := range container.VolumeMounts {
+				// Volumemount paths e.g. /runner and /runner/ are threated equal
+				// The last one in the pod spec will take precedence, which can lead to unexpected behavior
+				if volMounts.MountPath == filepath.Clean(runnerVolumeMountPath) {
+					return nil
+				}
+			}
+		}
+	}
+
+	runnerContainer := &pod.Spec.Containers[0]
 
 	volumeMount := corev1.VolumeMount{
 		Name:      runnerVolumeName,
 		MountPath: runnerVolumeMountPath,
 	}
-
 	runnerContainer.VolumeMounts = append(runnerContainer.VolumeMounts, volumeMount)
+
 	return nil
 }
 
