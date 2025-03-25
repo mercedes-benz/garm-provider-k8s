@@ -223,7 +223,7 @@ func CreateRunnerVolumeMount(pod *corev1.Pod, runnerContainerName string) error 
 			for _, volMounts := range container.VolumeMounts {
 				// Volumemount paths e.g. /runner and /runner/ are threated equal
 				// The last one in the pod spec will take precedence, which can lead to unexpected behavior
-				if volMounts.MountPath == filepath.Clean(runnerVolumeMountPath) {
+				if filepath.Clean(volMounts.MountPath) == runnerVolumeMountPath {
 					return nil
 				}
 			}
