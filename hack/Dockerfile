@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MIT
 
-FROM golang:1.22.5 AS build
+FROM golang:1.23.0 AS build
 
 ARG garm_repo=https://github.com/cloudbase/garm
 ARG garm_repo_ref=v0.1.4
