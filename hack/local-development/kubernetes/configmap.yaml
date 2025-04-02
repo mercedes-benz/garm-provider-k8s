@@ -42,13 +42,6 @@ data:
     config_file = "/opt/garm/provider-config/garm-provider-k8s-config.yaml"
     provider_executable = "/opt/garm/bin/garm-provider-k8s"
     environment_variables = ["KUBERNETES_"]
-
-    [[github]]
-    name = "$GARM_GITHUB_NAME"
-    oauth2_token = "$GARM_GITHUB_OAUTH_TOKEN"
-    base_url = "$GARM_GITHUB_BASE_URL"
-    api_base_url = "$GARM_GITHUB_API_BASE_URL"
-    upload_base_url = "$GARM_GITHUB_UPLOAD_BASE_URL"
 ---
 apiVersion: v1
 kind: ConfigMap
