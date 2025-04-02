@@ -34,10 +34,8 @@ Fine grained PATs are also supported as long as you grant the required privilege
    * **Repository permissions**:
      * `Administration: Read & write` - needed to generate JIT config/registration token, remove runners, etc.
      * `Metadata: Read-only` - automatically enabled by above
-     * `Webhooks: Read & write` - needed to install webhooks on repositories
   * **Organization permissions**:
      * `Self-hosted runners: Read & write` - needed to manage runners in an organization
-     * `Webhooks: Read & write` - needed to install webhooks on organizations
 
 1. To spin up GitHub Action Runners with `garm`, the `garm-operator` needs some CRs which can be created by the 
    following command.

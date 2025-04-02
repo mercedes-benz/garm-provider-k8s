@@ -1,4 +1,3 @@
-# nonk8s
 apiVersion: garm-operator.mercedes-benz.com/v1beta1
 kind: GarmServerConfig
 metadata:
