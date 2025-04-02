@@ -79,7 +79,7 @@ test:
 
 copy:
 	@echo "copying binaries..."
-	@mkdir -p ./hack/bin
+	@mkdir -p ./hack/bine
 	@cp "$(BIN_DIR)/$(BINARY_NAME)" "./hack/bin/$(BINARY_NAME)"
 
 clean:
@@ -96,11 +96,13 @@ docker-build: ## Build a garm image with the k8s provider
 
 .PHONY: docker-build-summerwind-runner
 docker-build-summerwind-runner: ## Build the used runner image
+	$(eval RUNNER_IMAGE ?= $(shell echo "localhost:5000/runner:linux-ubuntu-22.04-$(shell uname -m)"))
 	docker build -t $(RUNNER_IMAGE) ./runner/summerwind
 	docker push $(RUNNER_IMAGE)
 
 .PHONY: docker-build-upstream-runner
 docker-build-upstream-runner: ## Build the used runner image
+	$(eval RUNNER_IMAGE ?= $(shell echo "localhost:5000/runner:upstream-linux-ubuntu-22.04-$(shell uname -m)"))
 	docker build -t $(RUNNER_IMAGE) ./runner/upstream
 	docker push $(RUNNER_IMAGE)
 

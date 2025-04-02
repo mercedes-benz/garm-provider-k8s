@@ -2,6 +2,7 @@ apiVersion: garm-operator.mercedes-benz.com/v1beta1
 kind: GarmServerConfig
 metadata:
   name: garm-server-config
+  namespace: garm-operator-system
 spec:
   callbackUrl: http://garm-server.garm-server.svc:9997/api/v1/callbacks
   metadataUrl: http://garm-server.garm-server.svc:9997/api/v1/metadata
