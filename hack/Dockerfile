@@ -3,7 +3,7 @@
 FROM golang:1.24.2 AS build
 
 ARG garm_repo=https://github.com/cloudbase/garm
-ARG garm_repo_ref=v0.1.4
+ARG garm_repo_ref=v0.1.5
 
 # build garm binary
 # primarly used to get the binary build for
@@ -11,8 +11,8 @@ ARG garm_repo_ref=v0.1.4
 RUN git clone $garm_repo garm_repo && \
   cd garm_repo && \
   git checkout $garm_repo_ref && \
-  CGO_ENABLED=1 go install -ldflags "-linkmode external -extldflags '-static' -X main.Version=$garm_repo_ref" ./cmd/garm && \
-  CGO_ENABLED=1 go install -ldflags "-linkmode external -extldflags '-static' -X main.Version=$garm_repo_ref" ./cmd/garm-cli
+  CGO_ENABLED=1 go install -ldflags "-linkmode external -extldflags '-static' -X github.com/cloudbase/garm/util/appdefaults.Version=$garm_repo_ref" ./cmd/garm && \
+  CGO_ENABLED=1 go install -ldflags "-linkmode external -extldflags '-static' -X github.com/cloudbase/garm/util/appdefaults.Version=$garm_repo_ref" ./cmd/garm-cli
 
 
 FROM alpine:3.18
