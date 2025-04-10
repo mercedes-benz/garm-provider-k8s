@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strings"
 
@@ -15,7 +16,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/mercedes-benz/garm-provider-k8s/internal/spec"
 	"github.com/mercedes-benz/garm-provider-k8s/pkg/config"
@@ -202,9 +202,7 @@ func (p Provider) ListInstances(_ context.Context, _ string) ([]params.ProviderI
 	return result, nil
 }
 
-func (p Provider) RemoveAllInstances(ctx context.Context) error {
-	log := log.FromContext(ctx)
-
+func (p Provider) RemoveAllInstances(_ context.Context) error {
 	pods, err := p.ClientSet.
 		CoreV1().
 		Pods(config.Config.RunnerNamespace).
@@ -220,7 +218,7 @@ func (p Provider) RemoveAllInstances(ctx context.Context) error {
 			Pods(config.Config.RunnerNamespace).
 			Delete(context.Background(), pod.Name, metav1.DeleteOptions{})
 		if err != nil {
-			log.Error(err, fmt.Sprintf("Error deleting some pods: %v in namespace %v", pod.Name, pod.Namespace))
+			slog.Error(fmt.Sprintf("Error deleting pod: %v in namespace %v", pod.Name, pod.Namespace))
 		}
 	}
 	return nil
