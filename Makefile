@@ -79,7 +79,7 @@ test:
 
 copy:
 	@echo "copying binaries..."
-	@mkdir -p ./hack/bine
+	@mkdir -p ./hack/bin
 	@cp "$(BIN_DIR)/$(BINARY_NAME)" "./hack/bin/$(BINARY_NAME)"
 
 clean:
