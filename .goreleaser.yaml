@@ -54,7 +54,7 @@ release:
     owner: mercedes-benz
     name: garm-provider-k8s
   prerelease: auto
-  # extra_files:
-  #   - glob: tmp/3RD_PARTY_LICENSES.txt
-  #   - glob: tmp/BlackDuck_RiskReport.pdf
+  extra_files:
+    - glob: tmp/3RD_PARTY_LICENSES.txt
+    - glob: tmp/BlackDuck_RiskReport.pdf
   header:
