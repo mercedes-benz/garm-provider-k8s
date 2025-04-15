@@ -16,11 +16,8 @@ updates:
     schedule:
       interval: "weekly"
     ignore:
-      # Ignore k8s, controller-runtime and its transitives modules as they are upgraded manually.
+      # Ignore k8s and its transitives modules as they are upgraded manually.
       # we also have to update local kind cluster configuration (hack/kind-with-registry.sh)
-      - dependency-name: "sigs.k8s.io/controller-runtime"
-        update-types:
-          ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "k8s.io/*"
         update-types:
           ["version-update:semver-major", "version-update:semver-minor"]
