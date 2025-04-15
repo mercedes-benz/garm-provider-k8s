@@ -1,3 +1,5 @@
+SPDX-License-Identifier: MIT
+
 # only used for local development
 hack/local-development/kubernetes/garm-operator-all.yaml:generic-api-key:3385
 
