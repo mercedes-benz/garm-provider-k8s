@@ -18,107 +18,86 @@ To start developing, you need the following tools installed:
 
 ## Getting Started
 
-1. Get yourself a GitHub PAT for development purposes with access to an Organization where the runners will be registered.
+1. Get yourself a GitHub PAT for development purposes with access to a Repository where the runners will be 
+   registered. Your PAT needs the following permissions:
+   If you'll use a PAT (classic), you'll have to grant access for the following scopes. See official [cloudbase/garm](https://github.com/cloudbase/garm/blob/main/doc/github_credentials.md) docs for more information.
 
-1. To configure `garm` you have to generate a new `config.toml` with your previous created PAT.
-   You can use the `make template` target in the root directory of this repository to generate a new `configMap` which contains a valid `config.toml` for `garm`
+   * ```public_repo``` - for access to a repository
+   * ```repo``` - for access to a private repository
+   * ```admin:org``` - if you plan on using this with an organization to which you have access
+   * ```manage_runners:enterprise``` - if you plan to use garm at the enterprise level
+   * ```admin:repo_hook``` - if you want to allow GARM to install webhooks on repositories (optional)
+   * ```admin:org_hook``` - if you want to allow GARM to install webhooks on organizations (optional)
+
+Fine grained PATs are also supported as long as you grant the required privileges:
+
+   * **Repository permissions**:
+     * `Administration: Read & write` - needed to generate JIT config/registration token, remove runners, etc.
+     * `Metadata: Read-only` - automatically enabled by above
+  * **Organization permissions**:
+     * `Self-hosted runners: Read & write` - needed to manage runners in an organization
+
+1. To spin up GitHub Action Runners with `garm`, the `garm-operator` needs some CRs which can be created by the 
+   following command.
+   You can use the `make template` target in the root directory of this repository to generate a new 
+   `garm-operator-crs.yaml` which contains all CRs required for `garm-operator`.
    
       ```bash
-      GARM_GITHUB_OAUTH_TOKEN=ghp_QVK50pUo25QsJBy5DfA95EyUCzAbG20Q1NP2 make template
+      GARM_GITHUB_ORGANIZATION=my-github-org \
+      GARM_GITHUB_REPOSITORY=my-github-repo \
+      GARM_GITHUB_TOKEN=gha_testtoken \
+      GARM_GITHUB_WEBHOOK_SECRET=supersecret \
+      make template
       ```
 
-1. Start the development environment by running `make tilt-up` in the root directory of this repository.
+1. Start the development environment by running
+   ```bash
+   $ make tilt-up
+   ```
+   in the root directory of this repository.
 
    This will start a local Kubernetes cluster using `kind` (`kind get clusters` will show you a `garm` cluster) and deploy a garm-server with an already registered `garm-provider-k8s`.
    The `make tilt-up` command will give you the URL to the local tilt environment.
 
-1. As we also written the [garm-operator](https://github.com/mercedes-benz/garm-operator) to manage
+2. As we also written the [garm-operator](https://github.com/mercedes-benz/garm-operator) to manage
    `garm` resources (like `Pools`, `Organizations` and so on) we are using the `garm-operator` to bootstrap the local development setup. 
    
-   You will notice that in the `garm-operator-system` namespace the `garm-operator` is running.
-
-1. You are now able to create the `garm` resources by either creating them via `garm-cli` in the `garm-server` container (in `garm-server` namespace) or via the `garm-operator` by applying the following manifest files to your local cluster. 
+   You will notice that in the `garm-operator-system` namespace the `garm-operator` is running, and your previously 
+   created CRs are applied.
+   ```bash
+   $ kubectl get garm -n garm-operator-system
+   ```
+   ``` 
+   NAME                                                                  ID                                     VERSION   AGE
+   garmserverconfig.garm-operator.mercedes-benz.com/garm-server-config   65cc57ab-3a6c-48b9-9565-af7332e65f32   v0.1.5    10m
    
-      **organization:**
-      ```yaml
-      apiVersion: garm-operator.mercedes-benz.com/v1alpha1
-      kind: Organization
-      metadata:
-        labels:
-          app.kubernetes.io/name: organization
-          app.kubernetes.io/instance: organization-sample
-          app.kubernetes.io/part-of: garm-operator
-        name: your-org # this organization must exist and the PAT must have access to it
-        namespace: garm-operator-system
-      spec:
-        webhookSecretRef:
-          key: "webhookSecret"
-          name: "org-webhook-secret"
-        credentialsName: "github-pat"
-      ---
-      apiVersion: v1
-      kind: Secret
-      metadata:
-        name: org-webhook-secret
-        namespace: garm-operator-system
-      data:
-        webhookSecret: bXlzZWNyZXQ=
-      ```
+   NAME                                                          ID    READY   AUTHTYPE   GITHUBENDPOINT   AGE
+   githubcredential.garm-operator.mercedes-benz.com/github-pat   3     True    pat        github           28m
+   
+   NAME                                                    URL                      READY   AGE
+   githubendpoint.garm-operator.mercedes-benz.com/github   https://api.github.com   True    28m
+   
+   NAME                                                   TAG                                              AGE
+   image.garm-operator.mercedes-benz.com/runner-default   localhost:5000/runner:linux-ubuntu-22.04-arm64   10m
+   
+   NAME                                                        ID                                     MINIDLERUNNERS   MAXRUNNERS   READY   AGE
+   pool.garm-operator.mercedes-benz.com/kubernetes-pool-repo   8d8699c3-0acb-4fd5-9f5a-8b60b7504eca   1                2            True    10m
+   
+   NAME                                                        ID                                     READY   AGE
+   repository.garm-operator.mercedes-benz.com/test-workflows   3cd28551-18f8-430d-a0c8-49cf24dd7355   True    10m
+   
+   NAME                                                           ID                                     POOL                   GARM RUNNER STATUS   PROVIDER RUNNER STATUS   AGE
+   runner.garm-operator.mercedes-benz.com/garm-k8s-vi5mdto8lnav   9e475cad-0e22-4db2-b53b-3d8cb184439e   kubernetes-pool-repo   running              idle                     5m46s
 
-      **image:**
-      ```yaml
-      apiVersion: garm-operator.mercedes-benz.com/v1alpha1
-      kind: Image
-      metadata:
-        labels:
-          app.kubernetes.io/name: image
-          app.kubernetes.io/instance: image-sample
-          app.kubernetes.io/part-of: garm-operator
-        name: runner-default
-        namespace: garm-operator-system
-      spec:
-        tag: localhost:5000/runner:linux-ubuntu-22.04-x86_64
-      ```
+   ```
+3. Also in the `runner` namespace, you should see created runner pods by the `garm-provider-k8s`.
+   ```bash
+   $ kubectl get pods -n runner
+   ```
+   ```
+   NAME                    READY   STATUS    RESTARTS   AGE
+   garm-k8s-vi5mdto8lnav   1/1     Running   0          6m14s
+   ```
 
-      **pool:**
-      ```yaml
-      apiVersion: garm-operator.mercedes-benz.com/v1alpha1
-      kind: Pool
-      metadata:
-        labels:
-          app.kubernetes.io/instance: pool-sample
-          app.kubernetes.io/name: pool
-          app.kubernetes.io/part-of: garm-operator
-        name: k8s-pool
-        namespace: garm-operator-system
-      spec:
-        githubScopeRef:
-          apiGroup: garm-operator.mercedes-benz.com
-          kind: Organization
-          name: your-org
-        enabled: true
-        extraSpecs: "{}"
-        flavor: medium
-        githubRunnerGroup: ""
-        imageName: runner-default
-        maxRunners: 4
-        minIdleRunners: 2
-        osArch: amd64
-        osType: linux
-        providerName: kubernetes_external # this is the name defined in your garm server
-        runnerBootstrapTimeout: 20
-        runnerPrefix: ""
-        tags:
-          - linux
-          - kubernetes
-      ```
-
-      Now you should be able to see two pods in the `runner` namespace:
-      ```bash
-      $ kubectl get pods -n runner
-      NAME                READY   STATUS    RESTARTS   AGE
-      garm-hoyjldsegfal   1/1     Running   0          7s
-      garm-hpohj7g2b4df   1/1     Running   0          7s
-      ```
-
-1. Time to start developing. 🎉
+4. Everytime you now change some code, tilt will automatically build a new container image with the `garm-server` and
+   `garm-provider-k8s` binary and update the image tag in the k8s Deployment manifest. Time to start developing! 🎉

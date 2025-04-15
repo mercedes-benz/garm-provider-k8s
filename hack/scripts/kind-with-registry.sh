@@ -23,7 +23,7 @@ KIND_BINARY="bin/kind"
 NODE_IMAGE="kindest/node:v1.28.7@sha256:9bc6c451a289cf96ad0bbaf33d416901de6fd632415b076ab05f5fa7e4f65c58"
 
 # 1. If kind cluster already exists exit.
-if [[ "$(${KIND_BINARY} get clusters)" = "${KIND_CLUSTER_NAME}" ]]; then
+if [[ "$(${KIND_BINARY} get clusters)" =~ ${KIND_CLUSTER_NAME} ]]; then
   echo "kind cluster already exists, moving on"
   exit 0
 fi
