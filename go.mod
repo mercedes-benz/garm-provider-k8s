@@ -11,9 +11,9 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.0
 	github.com/knadh/koanf/v2 v2.2.0
 	github.com/stretchr/testify v1.10.0
-	k8s.io/api v0.30.12
-	k8s.io/apimachinery v0.30.12
-	k8s.io/client-go v0.30.12
+	k8s.io/api v0.30.13
+	k8s.io/apimachinery v0.30.13
+	k8s.io/client-go v0.30.13
 	sigs.k8s.io/yaml v1.4.0
 )
 
