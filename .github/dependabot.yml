@@ -17,7 +17,7 @@ updates:
       interval: "weekly"
     ignore:
       # Ignore k8s and its transitives modules as they are upgraded manually.
-      # we also have to update local kind cluster configuration (hack/kind-with-registry.sh)
+      # we also have to update local kind cluster configuration (hack/scripts/kind-with-registry.sh)
       - dependency-name: "k8s.io/*"
         update-types:
           ["version-update:semver-major", "version-update:semver-minor"]
