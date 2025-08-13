@@ -20,7 +20,7 @@ fi
 KIND_CLUSTER_NAME=${GARM_KIND_CLUSTER_NAME:-"garm"}
 KIND_BINARY="bin/kind"
 # available versions can be found at https://github.com/kubernetes-sigs/kind/releases
-NODE_IMAGE="kindest/node:v1.28.7@sha256:9bc6c451a289cf96ad0bbaf33d416901de6fd632415b076ab05f5fa7e4f65c58"
+NODE_IMAGE="kindest/node:v1.33.1@sha256:050072256b9a903bd914c0b2866828150cb229cea0efe5892e2b644d5dd3b34f"
 
 # 1. If kind cluster already exists exit.
 if [[ "$(${KIND_BINARY} get clusters)" =~ ${KIND_CLUSTER_NAME} ]]; then
@@ -38,7 +38,7 @@ if [ "$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true
 fi
 
 # 3. Create kind cluster with containerd registry config dir enabled.
-# TODO(killianmuldoon): kind will eventually enable this by default and this patch will be unnecessary.
+# kind will eventually enable this by default and this patch will be unnecessary.
 #
 # See:
 # https://github.com/kubernetes-sigs/kind/issues/2875
