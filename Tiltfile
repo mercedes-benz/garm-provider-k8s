@@ -12,25 +12,15 @@ deploy_cert_manager(
     version='v1.15.3' # the version of cert-manager to deploy
 )
 
-# build garm-provider-k8s binary with 'make build copy'
-local_resource(
-    "build provider",
-    cmd="make build copy",
-    auto_init=True,
-    trigger_mode=TRIGGER_MODE_MANUAL,
-    labels=["garm-k8s-provider"],
-    deps=["."]
-)
-
-# build garm image garm-with-k8s and push to localhost:5000/garm-with-k8s in ./hack context
+# build image localhost:5000/garm-provider-k8s:latest in current context
 docker_build(
-    'localhost:5000/garm-with-k8s',
-    './hack'
+    "localhost:5000/garm-with-k8s",
+    ".",
+    dockerfile="./hack/Dockerfile"
 )
 
 # build gh action runner  image in ./runner context
-cpu_arch = str(local('uname -m')).strip()
-image_tag="localhost:5000/runner:linux-ubuntu-22.04-" + cpu_arch
+image_tag="localhost:5000/runner:linux-ubuntu-22.04"
 
 local_resource(
     "build runner",
@@ -57,15 +47,12 @@ k8s_resource(
         'garm-kubernetes-provider-config:ConfigMap:garm-server',
         'garm-data:PersistentVolumeClaim:garm-server',
         'garm-home:PersistentVolumeClaim:garm-server'
-
     ],
     labels=["garm-server"],
 )
 
-# deploy the garm-operator and CRs
+# deploy the garm-operator
 k8s_yaml('hack/local-development/kubernetes/garm-operator-all.yaml')
-
-k8s_yaml('hack/local-development/kubernetes/garm-operator-crs.yaml')
 
 k8s_resource(
     "garm-operator-controller-manager",
@@ -90,14 +77,32 @@ k8s_resource(
         'garm-operator-serving-cert:Certificate:garm-operator-system',
         'garm-operator-selfsigned-issuer:Issuer:garm-operator-system',
         'garm-operator-validating-webhook-configuration:ValidatingWebhookConfiguration:default',
-        'garm-server-config:GarmServerConfig:garm-operator-system',
-        'github:GitHubEndpoint:garm-operator-system',
-        'github-pat:GitHubCredential:garm-operator-system',
-        'github-pat:Secret:garm-operator-system',
-        'test-workflows:Repository:garm-operator-system',
-        'repo-webhook-secret:Secret:garm-operator-system',
-        'runner-default:Image:garm-operator-system',
-        'kubernetes-pool-repo:Pool:garm-operator-system'
     ],
     labels=["operator"],
+)
+
+# Extract all resource names and kinds dynamically from the garm-operator-crs.yaml
+k8s_yaml('hack/local-development/kubernetes/garm-operator-crs.yaml')
+
+def get_operator_objects():
+    result = []
+    yaml_content = read_yaml_stream('hack/local-development/kubernetes/garm-operator-crs.yaml')
+    for resource in yaml_content:
+        if 'kind' in resource and 'metadata' in resource:
+            kind = resource['kind']
+            metadata = resource['metadata']
+            if 'name' in metadata:
+                name = metadata['name']
+                namespace = metadata.get('namespace', 'garm-operator-system') if 'namespace' in metadata else 'garm-operator-system'
+                result.append(name + ':' + kind + ':' + namespace)
+    print('Total objects returned: %s' % len(result))
+    return result
+
+operator_objects = get_operator_objects()
+
+k8s_resource(
+    new_name='garm-operator-crs',
+    objects=operator_objects,
+    labels=["operator"],
+    resource_deps=['garm-operator-controller-manager']
 )

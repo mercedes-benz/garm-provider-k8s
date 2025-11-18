@@ -105,4 +105,4 @@ spec:
   runnerBootstrapTimeout: 2
   runnerPrefix: "garm-k8s"
   tags:
-    - linux-ubuntu-22.04-x86_64
+    - linux-ubuntu-22.04
