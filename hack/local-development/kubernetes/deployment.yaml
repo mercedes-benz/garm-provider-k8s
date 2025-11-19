@@ -21,20 +21,22 @@ spec:
         - image: localhost:5000/garm-with-k8s:latest
           name: garm-server
           imagePullPolicy: Always
-          env:
-            - name: ARCH
-              value: <ARCH>
           volumeMounts:
             - name: data
               mountPath: /opt/garm/data
             - name: cli-config
               mountPath: /.local/share/garm-cli
             - name: garm-config
-              mountPath: /opt/garm/config
+              mountPath: /etc/garm/config.toml
+              subPath: config.toml
               readOnly: true
             - name: garm-kubernetes-provider-config
-              mountPath: /opt/garm/provider-config
+              mountPath: /etc/garm/garm-provider-k8s-config.yaml
+              subPath: garm-provider-k8s-config.yaml
+              readOnly: true
       securityContext:
+        runAsUser: 65534
+        runAsGroup: 65534
         runAsNonRoot: true
         fsGroup: 65534
       serviceAccountName: garm-server

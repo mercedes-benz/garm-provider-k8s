@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # SPDX-License-Identifier: MIT
 
 # This script installs a local kind cluster with a local container registry
@@ -17,13 +17,13 @@ if [[ "${TRACE-0}" == "1" ]]; then
   set -o xtrace
 fi
 
-KIND_CLUSTER_NAME=${GARM_KIND_CLUSTER_NAME:-"garm"}
+KIND_CLUSTER_NAME=${CAPI_KIND_CLUSTER_NAME:-"garm"}
 KIND_BINARY="bin/kind"
 # available versions can be found at https://github.com/kubernetes-sigs/kind/releases
-NODE_IMAGE="kindest/node:v1.33.1@sha256:050072256b9a903bd914c0b2866828150cb229cea0efe5892e2b644d5dd3b34f"
+NODE_IMAGE="kindest/node:v1.34.0@sha256:7416a61b42b1662ca6ca89f02028ac133a309a2a30ba309614e8ec94d976dc5a"
 
 # 1. If kind cluster already exists exit.
-if [[ "$(${KIND_BINARY} get clusters)" =~ ${KIND_CLUSTER_NAME} ]]; then
+if [[ "$(${KIND_BINARY} get clusters)" == "${KIND_CLUSTER_NAME}" ]]; then
   echo "kind cluster already exists, moving on"
   exit 0
 fi
@@ -38,22 +38,18 @@ if [ "$(docker inspect -f '{{.State.Running}}' "${reg_name}" 2>/dev/null || true
 fi
 
 # 3. Create kind cluster with containerd registry config dir enabled.
-# kind will eventually enable this by default and this patch will be unnecessary.
+# TODO: kind will eventually enable this by default and this patch will
+# be unnecessary.
 #
 # See:
 # https://github.com/kubernetes-sigs/kind/issues/2875
 # https://github.com/containerd/containerd/blob/main/docs/cri/config.md#registry-configuration
 # See: https://github.com/containerd/containerd/blob/main/docs/hosts.md
-cat <<EOF | "${KIND_BINARY}" create cluster --name="$KIND_CLUSTER_NAME" --image="${NODE_IMAGE}" --config=-
+cat <<EOF | "${KIND_BINARY}" create cluster --name="${KIND_CLUSTER_NAME}" --image="${NODE_IMAGE}" --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
-networking:
-  ipFamily: dual
-nodes:
-- role: control-plane
-  extraMounts:
-    - hostPath: /var/run/docker.sock
-      containerPath: /var/run/docker.sock
+featureGates:
+  ImageVolume: true
 containerdConfigPatches:
 - |-
   [plugins."io.containerd.grpc.v1.cri".registry]
@@ -61,7 +57,6 @@ containerdConfigPatches:
 EOF
 
 # 4. Add the registry config to the nodes
-#
 # This is necessary because localhost resolves to loopback addresses that are
 # network-namespace local.
 # In other words: localhost in the container is not localhost on the host.

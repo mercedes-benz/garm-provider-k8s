@@ -39,8 +39,8 @@ data:
     description = "kubernetes provider"
     provider_type = "external"
     [provider.external]
-    config_file = "/opt/garm/provider-config/garm-provider-k8s-config.yaml"
-    provider_executable = "/opt/garm/bin/garm-provider-k8s"
+    config_file = "/etc/garm/garm-provider-k8s-config.yaml"
+    provider_executable = "/opt/garm/providers.d/garm-provider-k8s"
     environment_variables = ["KUBERNETES_"]
 ---
 apiVersion: v1

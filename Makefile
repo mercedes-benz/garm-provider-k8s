@@ -56,21 +56,15 @@ GOLANGCI_LINT_VERSION ?= v1.59.1
 GORELEASER_VERSION ?= v1.21.0
 MDTOC_VERSION ?= v1.1.0
 NANCY_VERSION ?= v1.0.46
-KIND_VERSION ?= v0.22.0
+KIND_VERSION ?= v0.30.0
 
 ##@ Build
-.PHONY: all build copy run clean
+.PHONY: all
 all: clean build copy docker-build apply
 
 build:
 	@go mod tidy
-	@if [ "$(OS)" = "mac" ]; then \
-		echo "Building $(BINARY_NAME) for mac..." && \
-		GOOS="darwin" CGO_ENABLED=0 go build $(GO_BUILD_FLAGS) -o $(BIN_DIR)/$(BINARY_NAME) $(PKG_PATH); \
-	else \
-	  	echo "Building $(BINARY_NAME) for linux..." && \
-		GOOS="linux" CGO_ENABLED=0 go build $(GO_BUILD_FLAGS) -o $(BIN_DIR)/$(BINARY_NAME) $(PKG_PATH); \
-	fi
+	go build $(GO_BUILD_FLAGS) -o $(BIN_DIR)/$(BINARY_NAME) $(PKG_PATH); \
 
 test:
 	@echo "Testing App..."
@@ -90,13 +84,13 @@ DEBUG = 0
 
 ##@ Local Development
 .PHONY: docker-build
-docker-build: ## Build a garm image with the k8s provider
-	docker build -t localhost:5000/garm-with-k8s:latest ./hack
+docker-build: ## Build image with the k8s provider
+	docker build -f ./hack/Dockerfile -t localhost:5000/garm-with-k8s:latest .
 	docker push localhost:5000/garm-with-k8s:latest
 
 .PHONY: docker-build-summerwind-runner
 docker-build-summerwind-runner: ## Build the used runner image
-	$(eval RUNNER_IMAGE ?= $(shell echo "localhost:5000/runner:linux-ubuntu-22.04-$(shell uname -m)"))
+	$(eval RUNNER_IMAGE ?= $(shell echo "localhost:5000/runner:linux-ubuntu-22.04"))
 	docker build -t $(RUNNER_IMAGE) ./runner/summerwind
 	docker push $(RUNNER_IMAGE)
 
@@ -127,7 +121,7 @@ endif
 	GARM_GITHUB_ORGANIZATION=$(GARM_GITHUB_ORGANIZATION) \
 	GARM_GITHUB_TOKEN=$(shell echo -n $(GARM_GITHUB_TOKEN) | base64) \
 	GARM_GITHUB_WEBHOOK_SECRET=$(shell echo -n $(GARM_GITHUB_WEBHOOK_SECRET) | base64) \
-	RUNNER_IMAGE=$(shell echo "localhost:5000/runner:linux-ubuntu-22.04-$(shell uname -m)") \
+	RUNNER_IMAGE=$(shell echo "localhost:5000/runner:linux-ubuntu-22.04") \
 	envsubst < hack/local-development/kubernetes/garm-operator-crs-envsubst.yaml > hack/local-development/kubernetes/garm-operator-crs.yaml
 
 .PHONY: prepare-operator
@@ -150,7 +144,7 @@ delete-kind-cluster:
 
 .PHONY: tilt-up
 tilt-up: kind-cluster ## Start tilt and build kind cluster
-	tilt up
+	tilt up --port $(or $(PORT),10350)
 
 ##@ Release
 .PHONY: release

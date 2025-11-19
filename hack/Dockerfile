@@ -1,39 +1,41 @@
 # SPDX-License-Identifier: MIT
 
-FROM golang:1.24.2 AS build
-
-ARG garm_repo=https://github.com/cloudbase/garm
 ARG garm_repo_ref=v0.1.5
 
-# build garm binary
-# primarly used to get the binary build for
-# the local CPU architecture
-RUN git clone $garm_repo garm_repo && \
-  cd garm_repo && \
-  git checkout $garm_repo_ref && \
-  CGO_ENABLED=1 go install -ldflags "-linkmode external -extldflags '-static' -X github.com/cloudbase/garm/util/appdefaults.Version=$garm_repo_ref" ./cmd/garm && \
-  CGO_ENABLED=1 go install -ldflags "-linkmode external -extldflags '-static' -X github.com/cloudbase/garm/util/appdefaults.Version=$garm_repo_ref" ./cmd/garm-cli
+FROM golang:1.24.2 AS build
+
+WORKDIR /app
+
+# Get default value from ARG assigned before FROM
+ARG garm_repo_ref
+
+RUN ARCH=$(uname -m) && \
+    case ${ARCH} in \
+      x86_64) ARCH=amd64 ;; \
+      aarch64) ARCH=arm64 ;; \
+      *) echo "Unsupported architecture: ${ARCH}" ;; \
+    esac && \
+    wget -q https://github.com/cloudbase/garm/releases/download/${garm_repo_ref}/garm-cli-linux-${ARCH}.tgz && \
+    tar -xzf garm-cli-linux-${ARCH}.tgz && \
+    mv garm-cli /go/bin/garm-cli && \
+    chmod +x /go/bin/garm-cli && \
+    rm garm-cli-linux-${ARCH}.tgz
 
 
-FROM alpine:3.18
+COPY go.mod go.sum ./
 
-WORKDIR /opt/garm/
+RUN go mod download
 
-ENV PATH="${PATH}:/opt/garm/bin"
+COPY . .
 
-COPY --from=build /go/bin/garm ./bin/garm
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o ./garm-provider-k8s ./cmd/garm-provider-k8s
+
+RUN chmod +x ./garm-provider-k8s && \
+    chmod +x /go/bin/garm-cli
+
+
+FROM ghcr.io/cloudbase/garm:${garm_repo_ref}
+
 COPY --from=build /go/bin/garm-cli ./bin/garm-cli
 
-COPY ./scripts/entrypoint.sh ./bin/entrypoint.sh
-COPY ./bin/garm-provider-k8s ./bin/garm-provider-k8s
-
-RUN chmod +x ./bin/entrypoint.sh && \
-  chmod +x ./bin/garm && \
-  chmod +x ./bin/garm-cli && \
-  chmod +x ./bin/garm-provider-k8s
-
-USER 65543:65543
-
-EXPOSE 9997
-
-ENTRYPOINT ["/opt/garm/bin/entrypoint.sh"]
+COPY --from=build /app/garm-provider-k8s /opt/garm/providers.d/garm-provider-k8s
