@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 
+	executioncommon "github.com/cloudbase/garm-provider-common/execution/common"
 	"github.com/cloudbase/garm-provider-common/params"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -24,12 +25,23 @@ import (
 
 const (
 	runnerContainerName = "runner"
+
+	// Version is reported to GARM via GetVersion.
+	Version = "v0.1.0"
 )
 
 type Provider struct {
 	ControllerID  string
 	ClientSet     kubernetes.Interface
 	LabelSelector labels.Selector
+}
+
+// GARM type-asserts the provider against this interface at runtime; a
+// compile-time check keeps the method set from silently drifting.
+var _ executioncommon.ExternalProvider = Provider{}
+
+func (p Provider) GetVersion(_ context.Context) string {
+	return Version
 }
 
 func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.BootstrapInstance) (params.ProviderInstance, error) {

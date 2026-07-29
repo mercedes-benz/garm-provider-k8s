@@ -72,13 +72,20 @@ func kubernetesProvider() error {
 		return fmt.Errorf("could not initialize kube client: %w", err)
 	}
 
+	// The pool ID lives in the version-specific environment; pick whichever
+	// interface version GARM invoked us with.
+	poolID := executionEnv.EnvironmentV010.PoolID
+	if executionEnv.EnvironmentV011.PoolID != "" {
+		poolID = executionEnv.EnvironmentV011.PoolID
+	}
+
 	// create a new kubernetes provider
-	prov, err := provider.NewKubernetesProvider(clientset, executionEnv.ControllerID, executionEnv.PoolID)
+	prov, err := provider.NewKubernetesProvider(clientset, executionEnv.ControllerID, poolID)
 	if err != nil {
 		return fmt.Errorf("could not initialize provider: %w", err)
 	}
 
-	result, err := execution.Run(ctx, prov, executionEnv)
+	result, err := executionEnv.Run(ctx, prov)
 	if err != nil {
 		return fmt.Errorf("failed to run command: %w", err)
 	}
