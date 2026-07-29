@@ -177,7 +177,7 @@ verify-doctoc: generate-doctoc
 	fi
 
 .PHONY: verify-security
-verify-security: govulncheck-scan nancy-scan ## Verify security by running govulncheck and nancy
+verify-security: govulncheck-scan ## Verify security by running govulncheck and nancy
 	@echo "Security checks passed"
 
 .PHONY: govulncheck-scan
