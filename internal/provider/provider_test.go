@@ -1613,7 +1613,7 @@ func TestCreateInstance(t *testing.T) {
 			client := fake.NewSimpleClientset(tc.runtimeObjects...)
 
 			// initialize the provider
-			p, _ := provider.NewKubernetesProvider(client, controllerID, poolID)
+			p, _ := provider.NewKubernetesProvider(client, controllerID, poolID, "v0.1.0")
 
 			// trigger the instance creation
 			actual, err := p.CreateInstance(context.Background(), tc.bootstrapParams)
@@ -1786,7 +1786,7 @@ func TestGetInstance(t *testing.T) {
 
 			client := fake.NewSimpleClientset(tc.runtimeObjects...)
 
-			p, _ := provider.NewKubernetesProvider(client, controllerID, poolID)
+			p, _ := provider.NewKubernetesProvider(client, controllerID, poolID, "v0.1.0")
 
 			actual, err := p.GetInstance(context.Background(), instanceName)
 
@@ -1937,7 +1937,7 @@ func TestDeleteInstance(t *testing.T) {
 			client := fake.NewSimpleClientset(tc.runtimeObjects...)
 
 			// initialize the provider
-			p, _ := provider.NewKubernetesProvider(client, controllerID, poolID)
+			p, _ := provider.NewKubernetesProvider(client, controllerID, poolID, "v0.1.0")
 
 			labels := make(map[string]string)
 			labels[spec.GarmPoolIDLabel] = spec.ToValidLabel(poolID)
@@ -2224,7 +2224,7 @@ func TestRemoveAllInstances(t *testing.T) {
 
 			client := fake.NewSimpleClientset(tc.runtimeObjects...)
 
-			p, _ := provider.NewKubernetesProvider(client, controllerID, poolID)
+			p, _ := provider.NewKubernetesProvider(client, controllerID, poolID, "v0.1.0")
 
 			labels := make(map[string]string)
 			labels[spec.GarmPoolIDLabel] = spec.ToValidLabel(poolID)

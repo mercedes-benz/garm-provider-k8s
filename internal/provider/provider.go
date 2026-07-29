@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strings"
 
+	executioncommon "github.com/cloudbase/garm-provider-common/execution/common"
 	"github.com/cloudbase/garm-provider-common/params"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -30,6 +31,18 @@ type Provider struct {
 	ControllerID  string
 	ClientSet     kubernetes.Interface
 	LabelSelector labels.Selector
+	// Version is the GARM provider interface version this provider was
+	// invoked with (see the version-specific environments in
+	// https://github.com/cloudbase/garm-provider-common/tree/main/execution).
+	Version string
+}
+
+// GARM type-asserts the provider against this interface at runtime; a
+// compile-time check keeps the method set from silently drifting.
+var _ executioncommon.ExternalProvider = Provider{}
+
+func (p Provider) GetVersion(_ context.Context) string {
+	return p.Version
 }
 
 func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.BootstrapInstance) (params.ProviderInstance, error) {
@@ -234,7 +247,7 @@ func (p Provider) Start(_ context.Context, instance string) error {
 	panic(fmt.Sprintf("Start() not implemented, called with instance: %s", instance))
 }
 
-func NewKubernetesProvider(clientSet kubernetes.Interface, controllerID, poolID string) (*Provider, error) {
+func NewKubernetesProvider(clientSet kubernetes.Interface, controllerID, poolID, version string) (*Provider, error) {
 	labelSelector, err := metav1.LabelSelectorAsSelector(&metav1.LabelSelector{
 		MatchLabels: map[string]string{
 			spec.GarmControllerIDLabel: controllerID,
@@ -248,5 +261,6 @@ func NewKubernetesProvider(clientSet kubernetes.Interface, controllerID, poolID 
 		ControllerID:  controllerID,
 		ClientSet:     clientSet,
 		LabelSelector: labelSelector,
+		Version:       version,
 	}, nil
 }
