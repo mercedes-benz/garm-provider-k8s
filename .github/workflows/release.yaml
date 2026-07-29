@@ -6,7 +6,7 @@ on:
   push:
     # run only against tags
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -22,7 +22,7 @@ jobs:
       - run: git fetch --force --tags
       - uses: actions/setup-go@v6
         with:
-          go-version: '1.24.2'
+          go-version-file: go.mod
 
       - name: Synopsys Detect
         run: |
