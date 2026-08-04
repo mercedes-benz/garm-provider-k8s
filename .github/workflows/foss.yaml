@@ -19,7 +19,7 @@ jobs:
         id: go
 
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Synopsys Detect
         run: |
