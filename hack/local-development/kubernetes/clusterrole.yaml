@@ -3,9 +3,11 @@ kind: ClusterRole
 metadata:
   name: garm-provider-k8s
 rules:
+  # Namespaces: the provider ensures the runner namespace exists (get/create).
   - apiGroups: [""]
     resources: ["namespaces"]
-    verbs: ["get", "watch", "list", "create", "update", "patch", "delete"]
+    verbs: ["get", "create"]
+  # Pods: create/delete runners and read/list them for instance status.
   - apiGroups: [""]
     resources: ["pods"]
-    verbs: ["get", "watch", "list", "create", "update", "patch", "delete"]
+    verbs: ["get", "list", "create", "delete"]
