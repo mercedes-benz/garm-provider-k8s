@@ -13,6 +13,7 @@
 - [🚀 Installation](#-installation)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
+  - [Required RBAC permissions](#required-rbac-permissions)
 - [💻 Development](#-development)
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
@@ -81,6 +82,34 @@ flavors: # configure different flavors which will be set as `ResourceRequirement
     limits:
       memory: 1Gi
 ```
+
+#### Required RBAC permissions
+
+When garm runs **in-cluster** (using the attached ServiceAccount via `environment_variables = ["KUBERNETES_"]`), that ServiceAccount needs a `ClusterRole` with the permissions the provider actually calls:
+
+| Resource | Verbs | Used for |
+|---|---|---|
+| `namespaces` | `get`, `create` | Ensure the runner namespace exists |
+| `pods` | `get`, `list`, `create`, `delete` | Create/delete runners and read instance status |
+
+Example:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: garm-provider-k8s
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "create"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "create", "delete"]
+```
+
+Bind it to the ServiceAccount used by garm (see [`hack/local-development/kubernetes/`](hack/local-development/kubernetes/) for a local-development example).  
+`watch`, `update`, and `patch` are **not** required by the current provider code.
 
 ## 💻 Development
 
