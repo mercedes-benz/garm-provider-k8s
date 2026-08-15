@@ -2,8 +2,8 @@
 
 resources:
   - pvc.yaml
-  - clusterrole-binding.yaml
-  - clusterrole.yaml
+  - role-binding.yaml
+  - role.yaml
   - deployment.yaml
   - namespace.yaml
   - service.yaml

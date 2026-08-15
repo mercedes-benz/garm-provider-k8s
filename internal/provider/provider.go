@@ -68,11 +68,6 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 		},
 	}
 
-	err = p.ensureNamespace(config.Config.RunnerNamespace)
-	if err != nil {
-		return params.ProviderInstance{}, fmt.Errorf("ensuring runner namespace %s failed: %w", config.Config.RunnerNamespace, err)
-	}
-
 	err = spec.CreateRunnerVolume(pod)
 	if err != nil {
 		return params.ProviderInstance{}, err
@@ -92,7 +87,12 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 		Pods(config.Config.RunnerNamespace).
 		Create(context.Background(), mergedPod, metav1.CreateOptions{})
 	if err != nil {
-		return params.ProviderInstance{}, fmt.Errorf("error calling CreateInstance: can not create pod %v: %w", pod.Name, err)
+		// The runner namespace and the Role granting pod access in it are provisioned
+		// by the installation, not by the provider.
+		if apierrors.IsNotFound(err) || apierrors.IsForbidden(err) {
+			return params.ProviderInstance{}, fmt.Errorf("error calling CreateInstance: can not create pod %s in namespace %s, make sure the namespace exists and garm is allowed to manage pods in it: %w", mergedPod.Name, config.Config.RunnerNamespace, err)
+		}
+		return params.ProviderInstance{}, fmt.Errorf("error calling CreateInstance: can not create pod %s: %w", mergedPod.Name, err)
 	}
 
 	result, err := spec.PodToInstance(pod, params.InstanceRunning)
@@ -101,30 +101,6 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 	}
 
 	return *result, nil
-}
-
-func (p Provider) ensureNamespace(runnerNamespace string) error {
-	_, err := p.ClientSet.CoreV1().
-		Namespaces().
-		Get(context.Background(), runnerNamespace, metav1.GetOptions{})
-	if err != nil && !apierrors.IsNotFound(err) {
-		return err
-	}
-
-	// if namespace doesn't exist
-	// there is no need for creating again
-	if apierrors.IsNotFound(err) {
-		_, err = p.ClientSet.CoreV1().Namespaces().Create(context.Background(), &corev1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: runnerNamespace,
-			},
-		}, metav1.CreateOptions{})
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func mergePodSpecs(pod *corev1.Pod, template corev1.PodTemplateSpec) (*corev1.Pod, error) {
