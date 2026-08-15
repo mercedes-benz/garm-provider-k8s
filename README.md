@@ -85,31 +85,37 @@ flavors: # configure different flavors which will be set as `ResourceRequirement
 
 #### Required RBAC permissions
 
-When garm runs **in-cluster** (using the attached ServiceAccount via `environment_variables = ["KUBERNETES_"]`), that ServiceAccount needs a `ClusterRole` with the permissions the provider actually calls:
+The `runnerNamespace` is expected to exist before the provider runs — create it as part of your
+installation. The provider does not create it.
+
+When garm runs **in-cluster** (using the attached ServiceAccount via `environment_variables = ["KUBERNETES_"]`),
+that ServiceAccount only needs pod permissions inside the runner namespace:
 
 | Resource | Verbs | Used for |
 |---|---|---|
-| `namespaces` | `get`, `create` | Ensure the runner namespace exists |
 | `pods` | `get`, `list`, `create`, `delete` | Create/delete runners and read instance status |
 
-Example:
+A namespaced `Role` is enough, no cluster-wide permissions are required:
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: garm-provider-k8s
+  namespace: runner
 rules:
-  - apiGroups: [""]
-    resources: ["namespaces"]
-    verbs: ["get", "create"]
   - apiGroups: [""]
     resources: ["pods"]
     verbs: ["get", "list", "create", "delete"]
 ```
 
-Bind it to the ServiceAccount used by garm (see [`hack/local-development/kubernetes/`](hack/local-development/kubernetes/) for a local-development example).  
+Bind it to the ServiceAccount used by garm with a `RoleBinding` in the same namespace (see
+[`hack/local-development/kubernetes/`](hack/local-development/kubernetes/) for a working example).
 `watch`, `update`, and `patch` are **not** required by the current provider code.
+
+If you run the provider against several runner namespaces, create one `Role` and `RoleBinding` per
+namespace. Note that a `RoleBinding` pointing at a `ClusterRole` only grants the namespaced rules of
+that `ClusterRole`, so adding cluster-scoped resources such as `namespaces` to it has no effect.
 
 ## 💻 Development
 
