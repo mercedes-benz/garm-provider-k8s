@@ -13,7 +13,6 @@
 - [🚀 Installation](#-installation)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-  - [Required RBAC permissions](#required-rbac-permissions)
 - [💻 Development](#-development)
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
@@ -56,7 +55,7 @@ provider_type = "external"
 [provider.external]
 config_file = "/path/to/garm-provider-k8s-config.yaml"
 provider_executable = "/path/to/provider/binary/garm-provider-k8s"
-environment_variables = ["KUBERNETES_"] # this must be set if the runner-pods should run in the same cluster as garm itself is running and the attached serviceaccount should be used to create pods and the runner namespace
+environment_variables = ["KUBERNETES_"] # this must be set if the runner-pods should run in the same cluster as garm itself is running and the attached serviceaccount should be used to create pods
 ```
 
 The provider specific config file should look like this:
