@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/yaml v1.1.1
 	github.com/knadh/koanf/providers/file v1.2.1
-	github.com/knadh/koanf/v2 v2.3.6
+	github.com/knadh/koanf/v2 v2.3.7
 	github.com/stretchr/testify v1.12.1
 	k8s.io/api v0.33.13
 	k8s.io/apimachinery v0.33.13
