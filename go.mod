@@ -5,7 +5,7 @@ module github.com/mercedes-benz/garm-provider-k8s
 go 1.26.5
 
 require (
-	github.com/cloudbase/garm-provider-common v0.1.3
+	github.com/cloudbase/garm-provider-common v0.1.9
 	github.com/google/uuid v1.6.0
 	github.com/knadh/koanf/parsers/yaml v1.1.1
 	github.com/knadh/koanf/providers/file v1.2.1
