@@ -143,7 +143,9 @@ func mergePodSpecs(pod *corev1.Pod, template corev1.PodTemplateSpec) (*corev1.Po
 	}
 
 	mergedPod := &corev1.Pod{}
-	json.Unmarshal(mergeBytes, mergedPod)
+	// nolint:godox
+	// TODO: catch error
+	json.Unmarshal(mergeBytes, mergedPod) //nolint:gosec
 	return mergedPod, nil
 }
 

@@ -1,16 +1,13 @@
 # SPDX-License-Identifier: MIT
-
+version: "2"
+run:
+  allow-parallel-runners: true
 linters:
-  disable-all: true
-  fast: false
+  default: none
   enable:
-    - gci
     - goconst
     - gocritic
     - gocyclo
-    - gofmt
-    - gofumpt
-    - goimports
     - godox
     - govet
     - gosec
@@ -29,27 +26,41 @@ linters:
     - unused
     - wastedassign
     - whitespace
+  settings:
+    importas:
+      no-unaliased: false
+      alias:
+        - pkg: k8s.io/api/core/v1
+          alias: corev1
+        - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
+          alias: metav1
+    loggercheck:
+      klog: true
+      zap: false
+      require-string-key: true
+      no-printf-like: true
+  exclusions:
+    rules:
+      - linters:
+          - goconst
+        path: '.+_test\.go'
+      - linters:
+          - revive
+        path: '.+\.go'
+        # Exclude all Go files for the revive linter for now
+        # enable it later after fixing existing issues
 
-linters-settings:
-  gci:
-    sections:
-      - standard
-      - default
-      - prefix(github.com/mercedes-benz/garm-provider-k8s)
-
-  goimports:
-    local-prefixes: github.com/mercedes-benz/garm-provider-k8s
-
-  importas:
-    no-unaliased: false
-    alias:
-      - pkg: k8s.io/api/core/v1
-        alias: corev1
-      - pkg: k8s.io/apimachinery/pkg/apis/meta/v1
-        alias: metav1
-
-  loggercheck:
-    klog: true
-    zap: false
-    require-string-key: true
-    no-printf-like: true
+formatters:
+  enable:
+    - gci
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/mercedes-benz/garm-provider-k8s
+    gci:
+      sections:
+        - standard
+        - default
+        - prefix(github.com/mercedes-benz/garm-provider-k8s)

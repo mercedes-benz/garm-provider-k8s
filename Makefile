@@ -52,11 +52,12 @@ GOVULNCHECK ?= $(LOCALBIN)/govulncheck
 KIND ?= $(LOCALBIN)/kind
 
 ## Tool Versions
-GOLANGCI_LINT_VERSION ?= v1.59.1
+GOLANGCI_LINT_VERSION ?= v2.15.0
 GORELEASER_VERSION ?= v1.21.0
 MDTOC_VERSION ?= v1.1.0
 NANCY_VERSION ?= v1.0.46
 KIND_VERSION ?= v0.30.0
+GOVULNCHECK_VERSION ?= v1.2.0
 
 ##@ Build
 .PHONY: all
@@ -194,7 +195,7 @@ nancy-scan: nancy ## Perform nancy scan
 golangci-lint: $(GOLANGCI_LINT) ## Download golangci-lint locally if necessary. If wrong version is installed, it will be overwritten.
 $(GOLANGCI_LINT): $(LOCALBIN)
 	test -s $(LOCALBIN)/golangci-lint && $(LOCALBIN)/golangci-lint --version | grep -q $(GOLANGCI_LINT_VERSION) || \
-	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	GOBIN=$(LOCALBIN) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
 
 .PHONY: goreleaser
 goreleaser: $(GORELEASER) ## Download goreleaser locally if necessary. If wrong version is installed, it will be overwritten.
@@ -218,7 +219,7 @@ $(NANCY): $(LOCALBIN)
 govulncheck: $(GOVULNCHECK) ## Download govulncheck locally if necessary. If wrong version is installed, it will be overwritten.
 $(GOVULNCHECK): $(LOCALBIN)
 	test -s $(LOCALBIN)/govulncheck || \
-	GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@latest
+	GOBIN=$(LOCALBIN) go install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
 
 .PHONY: kind
 kind: $(KIND) ## Download kind locally if necessary. If wrong version is installed, it will be overwritten.
