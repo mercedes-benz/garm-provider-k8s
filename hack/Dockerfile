@@ -2,7 +2,7 @@
 
 ARG garm_repo_ref=v0.1.5
 
-FROM golang:1.26.5 AS build
+FROM golang:1.27.2 AS build
 
 WORKDIR /app
 

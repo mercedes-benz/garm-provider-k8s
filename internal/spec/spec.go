@@ -69,7 +69,7 @@ var statusMap = map[string]string{
 }
 
 func PodToInstance(pod *corev1.Pod, overwriteInstanceStatus params.InstanceStatus) (*params.ProviderInstance, error) {
-	instanceName, ok := pod.ObjectMeta.Labels[GarmInstanceNameLabel]
+	instanceName, ok := pod.ObjectMeta.Labels[GarmInstanceNameLabel] //nolint:staticcheck
 	if !ok {
 		instanceName = pod.Name
 	}
@@ -269,11 +269,11 @@ func GetRunnerEnvs(gitHubScope GitHubScopeDetails, bootstrapParams params.Bootst
 		},
 		{
 			Name:  "RUNNER_NO_DEFAULT_LABELS",
-			Value: "true",
+			Value: "true", //nolint:goconst
 		},
 		{
 			Name:  "DISABLE_RUNNER_UPDATE",
-			Value: "true",
+			Value: "true", //nolint:goconst
 		},
 		{
 			Name:  "RUNNER_WORKDIR",
@@ -285,7 +285,7 @@ func GetRunnerEnvs(gitHubScope GitHubScopeDetails, bootstrapParams params.Bootst
 		},
 		{
 			Name:  "RUNNER_EPHEMERAL",
-			Value: "true",
+			Value: "true", //nolint:goconst
 		},
 		{
 			Name:  "RUNNER_TOKEN",
