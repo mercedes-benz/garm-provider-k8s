@@ -12,15 +12,13 @@ jobs:
     name: foss-scan
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Go 1.26.5
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Go
         uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
         id: go
-
-      - name: Checkout code
-        uses: actions/checkout@v7
-
       - name: Synopsys Detect
         run: |
           GITHUB_REF="$(echo $GITHUB_REF_NAME | tr ':/' '_')"
