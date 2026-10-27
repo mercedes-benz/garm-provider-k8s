@@ -55,7 +55,7 @@ provider_type = "external"
 [provider.external]
 config_file = "/path/to/garm-provider-k8s-config.yaml"
 provider_executable = "/path/to/provider/binary/garm-provider-k8s"
-environment_variables = ["KUBERNETES_"] # this must be set if the runner-pods should run in the same cluster as garm itself is running and the attached serviceaccount should be used to create pods and the runner namespace
+environment_variables = ["KUBERNETES_"] # this must be set if the runner-pods should run in the same cluster as garm itself is running and the attached serviceaccount should be used to create pods
 ```
 
 The provider specific config file should look like this:
@@ -81,6 +81,40 @@ flavors: # configure different flavors which will be set as `ResourceRequirement
     limits:
       memory: 1Gi
 ```
+
+#### Required RBAC permissions
+
+The `runnerNamespace` is expected to exist before the provider runs — create it as part of your
+installation. The provider does not create it.
+
+When garm runs **in-cluster** (using the attached ServiceAccount via `environment_variables = ["KUBERNETES_"]`),
+that ServiceAccount only needs pod permissions inside the runner namespace:
+
+| Resource | Verbs | Used for |
+|---|---|---|
+| `pods` | `get`, `list`, `create`, `delete` | Create/delete runners and read instance status |
+
+A namespaced `Role` is enough, no cluster-wide permissions are required:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: garm-provider-k8s
+  namespace: runner
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "create", "delete"]
+```
+
+Bind it to the ServiceAccount used by garm with a `RoleBinding` in the same namespace (see
+[`hack/local-development/kubernetes/`](hack/local-development/kubernetes/) for a working example).
+`watch`, `update`, and `patch` are **not** required by the current provider code.
+
+If you run the provider against several runner namespaces, create one `Role` and `RoleBinding` per
+namespace. Note that a `RoleBinding` pointing at a `ClusterRole` only grants the namespaced rules of
+that `ClusterRole`, so adding cluster-scoped resources such as `namespaces` to it has no effect.
 
 ## 💻 Development
 
