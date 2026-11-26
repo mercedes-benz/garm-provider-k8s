@@ -21,6 +21,9 @@ type ProviderConfig struct {
 	RunnerNamespace string                                 `koanf:"runnerNamespace"`
 	PodTemplate     corev1.PodTemplateSpec                 `koanf:"podTemplate"`
 	Flavors         map[string]corev1.ResourceRequirements `koanf:"flavors"`
+	// FlavorPodTemplates are optional per-flavor overlays, merged over the pod
+	// after PodTemplate. A flavor without an entry gets PodTemplate only.
+	FlavorPodTemplates map[string]corev1.PodTemplateSpec `koanf:"flavorPodTemplates"`
 }
 
 var Config ProviderConfig
@@ -45,6 +48,13 @@ func NewConfig(configPath string) error {
 	Config.PodTemplate = unmarshalPodTemplateSpec(k)
 	k.Delete("podTemplate")
 
+	flavorPodTemplates, err := unmarshalFlavorPodTemplates(k)
+	if err != nil {
+		return fmt.Errorf("failed to parse flavorPodTemplates: %w", err)
+	}
+	Config.FlavorPodTemplates = flavorPodTemplates
+	k.Delete("flavorPodTemplates")
+
 	// unmarshal all koanf config keys into ProviderConfig struct
 	if err := k.Unmarshal("", &Config); err != nil {
 		return fmt.Errorf("failed to unmarshal config: %v", err)
@@ -61,7 +71,7 @@ func NewConfig(configPath string) error {
 	}
 
 	// validate the given runner namespace
-	err := validateNamespace(Config.RunnerNamespace)
+	err = validateNamespace(Config.RunnerNamespace)
 	if err != nil {
 		return fmt.Errorf("failed to validate namespace: %v", err)
 	}
@@ -127,6 +137,36 @@ func unmarshalPodTemplateSpec(k *koanf.Koanf) corev1.PodTemplateSpec {
 		return defaultSpec
 	}
 	return podTemplate
+}
+
+// unmarshalFlavorPodTemplates decodes the optional per-flavor pod template
+// overlays. Unlike podTemplate and flavors, a malformed entry or an unknown
+// field is an error: an overlay that silently decodes to nothing would create
+// pods missing whatever the overlay was meant to add.
+func unmarshalFlavorPodTemplates(k *koanf.Koanf) (map[string]corev1.PodTemplateSpec, error) {
+	raw := k.Get("flavorPodTemplates")
+	if raw == nil {
+		return nil, nil
+	}
+
+	rawYAML, err := yaml.Marshal(raw)
+	if err != nil {
+		return nil, err
+	}
+
+	var result map[string]corev1.PodTemplateSpec
+	if err := yaml.UnmarshalStrict(rawYAML, &result); err != nil {
+		return nil, err
+	}
+
+	for name, tpl := range result {
+		// a nil containers list would clear out the containers field in the merge
+		if tpl.Spec.Containers == nil {
+			tpl.Spec.Containers = []corev1.Container{}
+			result[name] = tpl
+		}
+	}
+	return result, nil
 }
 
 func unmarshalFlavors(k *koanf.Koanf) map[string]corev1.ResourceRequirements {

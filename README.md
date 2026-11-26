@@ -80,7 +80,21 @@ flavors: # configure different flavors which will be set as `ResourceRequirement
       memory: 500Mi
     limits:
       memory: 1Gi
+flavorPodTemplates: # optional per-flavor pod template overlays, merged on top of `podTemplate` for pods of that flavor only (e.g. a sidecar only bigger flavors should pay for)
+  ultra:
+    spec:
+      initContainers:
+        - name: my-sidecar
+          image: my-sidecar:latest
+          restartPolicy: Always
 ```
+
+`podTemplate` and `flavorPodTemplates` are applied as Kubernetes strategic merge patches, in that order:
+
+- lists with a merge key (`containers`, `initContainers`, `volumes`, `env`, `volumeMounts`, ...) are merged by name. An entry named like an existing one (e.g. the `runner` container) is merged into it; a new entry is placed **before** the existing ones.
+- other lists (`tolerations`, a container's `args` and `command`, ...) are replaced as a whole, so a flavor overlay setting `tolerations` must repeat the ones from `podTemplate`.
+- a template can set or change a field but not unset it: `false`, `0` and `""` are indistinguishable from "not set".
+- unlike the other keys, `flavorPodTemplates` is parsed strictly: an unknown or misspelled field fails the provider instead of being dropped.
 
 ## 💻 Development
 

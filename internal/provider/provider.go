@@ -73,12 +73,12 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 		return params.ProviderInstance{}, fmt.Errorf("ensuring runner namespace %s failed: %w", config.Config.RunnerNamespace, err)
 	}
 
-	err = spec.CreateRunnerVolume(pod)
+	err = spec.CreateRunnerVolume(pod, bootstrapParams.Flavor)
 	if err != nil {
 		return params.ProviderInstance{}, err
 	}
 
-	err = spec.CreateRunnerVolumeMount(pod, runnerContainerName)
+	err = spec.CreateRunnerVolumeMount(pod, runnerContainerName, bootstrapParams.Flavor)
 	if err != nil {
 		return params.ProviderInstance{}, err
 	}
@@ -86,6 +86,14 @@ func (p Provider) CreateInstance(_ context.Context, bootstrapParams params.Boots
 	mergedPod, err := mergePodSpecs(pod, config.Config.PodTemplate)
 	if err != nil {
 		return params.ProviderInstance{}, err
+	}
+
+	// optional per-flavor overlay, applied on top of the common pod template
+	if overlay, ok := config.Config.FlavorPodTemplates[bootstrapParams.Flavor]; ok {
+		mergedPod, err = mergePodSpecs(mergedPod, overlay)
+		if err != nil {
+			return params.ProviderInstance{}, err
+		}
 	}
 
 	pod, err = p.ClientSet.CoreV1().
@@ -130,6 +138,11 @@ func (p Provider) ensureNamespace(runnerNamespace string) error {
 func mergePodSpecs(pod *corev1.Pod, template corev1.PodTemplateSpec) (*corev1.Pod, error) {
 	if reflect.ValueOf(template).IsZero() {
 		return pod, nil
+	}
+
+	// a nil containers list would clear out the pod's containers in the merge
+	if template.Spec.Containers == nil {
+		template.Spec.Containers = []corev1.Container{}
 	}
 
 	patch, _, err := diff.CreateTwoWayMergePatch(pod.Spec, template, corev1.PodTemplateSpec{})
