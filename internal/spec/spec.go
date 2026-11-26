@@ -187,15 +187,29 @@ func ToValidLabel(input string) string {
 	return result
 }
 
-func CreateRunnerVolume(pod *corev1.Pod) error {
+// podTemplatesForFlavor returns the templates that will be merged over a pod
+// of the given flavor: the common podTemplate, then the flavor's overlay if
+// there is one.
+func podTemplatesForFlavor(flavor string) []corev1.PodTemplateSpec {
+	templates := []corev1.PodTemplateSpec{config.Config.PodTemplate}
+	if overlay, ok := config.Config.FlavorPodTemplates[flavor]; ok {
+		templates = append(templates, overlay)
+	}
+	return templates
+}
+
+func CreateRunnerVolume(pod *corev1.Pod, flavor string) error {
 	if len(pod.Spec.Containers) < 1 {
 		return fmt.Errorf("pod %s has no runner container spec", pod.Name)
 	}
 
-	// Skip volume creation if a volume with the default name already exists in podTemplate
-	for _, vol := range config.Config.PodTemplate.Spec.Volumes {
-		if vol.Name == runnerVolumeName {
-			return nil
+	// Skip volume creation if a volume with the default name already exists in
+	// podTemplate or in the flavor's overlay
+	for _, template := range podTemplatesForFlavor(flavor) {
+		for _, vol := range template.Spec.Volumes {
+			if vol.Name == runnerVolumeName {
+				return nil
+			}
 		}
 	}
 
@@ -211,20 +225,22 @@ func CreateRunnerVolume(pod *corev1.Pod) error {
 	return nil
 }
 
-func CreateRunnerVolumeMount(pod *corev1.Pod, runnerContainerName string) error {
+func CreateRunnerVolumeMount(pod *corev1.Pod, runnerContainerName, flavor string) error {
 	if len(pod.Spec.Containers) < 1 {
 		return fmt.Errorf("pod %s has no runner container spec", pod.Name)
 	}
 
 	// Skip volumemount creation if a volumemount with the same path already exists
-	// in podTemplate for the default container
-	for _, container := range config.Config.PodTemplate.Spec.Containers {
-		if container.Name == runnerContainerName {
-			for _, volMounts := range container.VolumeMounts {
-				// Volumemount paths e.g. /runner and /runner/ are threated equal
-				// The last one in the pod spec will take precedence, which can lead to unexpected behavior
-				if filepath.Clean(volMounts.MountPath) == runnerVolumeMountPath {
-					return nil
+	// in podTemplate or in the flavor's overlay for the default container
+	for _, template := range podTemplatesForFlavor(flavor) {
+		for _, container := range template.Spec.Containers {
+			if container.Name == runnerContainerName {
+				for _, volMounts := range container.VolumeMounts {
+					// Volumemount paths e.g. /runner and /runner/ are threated equal
+					// The last one in the pod spec will take precedence, which can lead to unexpected behavior
+					if filepath.Clean(volMounts.MountPath) == runnerVolumeMountPath {
+						return nil
+					}
 				}
 			}
 		}
